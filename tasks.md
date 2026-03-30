@@ -17,7 +17,7 @@
 
 ### 1-3. 패키지 구조 생성
 - [x] `auth.controller` / `auth.service` / `auth.repository` / `auth.dto` / `auth.jwt` 패키지 생성
-- [x] `member.controller` / `member.service` / `member.repository` / `member.dto` / `member.entity` 패키지 생성
+- [x] `user.controller` / `user.service` / `user.repository` / `user.dto` / `user.entity` 패키지 생성
 - [x] `common.exception` / `common.response` / `common.config` 패키지 생성
 
 ### 1-4. 공통 응답 구조
@@ -34,15 +34,15 @@
 - [x] 그 외 미처리 예외 → `500 Internal Server Error`
 
 ### 1-6. Flyway 마이그레이션 스크립트
-- [x] `V1__create_member.sql` 작성 및 적용 확인
-- [x] `V2__create_member_interest_region.sql` 작성 및 적용 확인
+- [x] `V1__create_users.sql` 작성 및 적용 확인
+- [x] `V2__create_user_interest_region.sql` 작성 및 적용 확인
 - [x] `V3__create_refresh_token.sql` 작성 및 적용 확인
 
 ### 1-7. 엔티티 클래스
-- [x] `Member` 엔티티 작성 (`id`, `email`, `password`, `name`, `phone`, `nickname`, `status`, `createdAt`, `updatedAt`)
-- [x] `MemberStatus` Enum 작성 (`ACTIVE`, `SUSPENDED`, `WITHDRAWN`)
-- [x] `MemberInterestRegion` 엔티티 작성 (`id`, `memberId`, `region`)
-- [x] `RefreshToken` 엔티티 작성 (`id`, `memberId`, `token`, `expiresAt`, `createdAt`)
+- [x] `User` 엔티티 작성 (`id`, `email`, `password`, `name`, `phone`, `nickname`, `status`, `createdAt`, `updatedAt`)
+- [x] `UserStatus` Enum 작성 (`ACTIVE`, `SUSPENDED`, `WITHDRAWN`)
+- [x] `UserInterestRegion` 엔티티 작성 (`id`, `userId`, `region`)
+- [x] `RefreshToken` 엔티티 작성 (`id`, `userId`, `token`, `expiresAt`, `createdAt`)
 
 ### 1-8. Phase 1 완료 기준 검증
 - [x] `./gradlew compileJava` 정상 빌드 확인
@@ -77,21 +77,21 @@
 - [ ] `SignupResponse` 작성 (`id`, `email`, `nickname`)
 
 ### 2-4. 회원 Repository
-- [ ] `MemberRepository` 인터페이스 작성
+- [ ] `UserRepository` 인터페이스 작성
   - [ ] `existsByEmail(String email)`
   - [ ] `existsByPhone(String phone)`
   - [ ] `existsByNicknameIgnoreCase(String nickname)`
   - [ ] `findByEmail(String email)`
-- [ ] `MemberInterestRegionRepository` 인터페이스 작성
+- [ ] `UserInterestRegionRepository` 인터페이스 작성
 
 ### 2-5. 회원가입 Service
-- [ ] `MemberService` 클래스 작성
+- [ ] `UserService` 클래스 작성
 - [ ] 이메일 중복 확인 로직
 - [ ] 핸드폰 번호 중복 확인 로직
 - [ ] 닉네임 중복 확인 로직 (대소문자 무시)
 - [ ] 비밀번호 BCrypt 해싱
-- [ ] `Member` 저장
-- [ ] `MemberInterestRegion` 리스트 저장 (관심 지역 선택 시)
+- [ ] `User` 저장
+- [ ] `UserInterestRegion` 리스트 저장 (관심 지역 선택 시)
 
 ### 2-6. 회원가입 Controller
 - [ ] `AuthController` 클래스 작성
@@ -122,17 +122,17 @@
 
 ### 3-2. JwtProvider
 - [ ] `JwtProvider` 클래스 작성
-- [ ] Access Token 생성 메서드 (subject: `memberId`, 만료: 1시간)
+- [ ] Access Token 생성 메서드 (subject: `userId`, 만료: 1시간)
 - [ ] Refresh Token 생성 메서드 (만료: 30일)
 - [ ] 토큰 유효성 검증 메서드
-- [ ] 토큰에서 `memberId` 파싱 메서드
+- [ ] 토큰에서 `userId` 파싱 메서드
 - [ ] 토큰 만료 여부 확인 메서드
 
 ### 3-3. RefreshToken Repository
 - [ ] `RefreshTokenRepository` 인터페이스 작성
   - [ ] `findByToken(String token)`
-  - [ ] `findByMemberId(Long memberId)`
-  - [ ] `deleteByMemberId(Long memberId)`
+  - [ ] `findByUserId(Long userId)`
+  - [ ] `deleteByUserId(Long userId)`
 
 ### 3-4. 로그인 DTO
 - [ ] `LoginRequest` 작성 (`email`, `password`)
@@ -187,7 +187,7 @@
 
 ### 4-3. 로그아웃 Service
 - [ ] `AuthService`에 `logout()` 메서드 추가
-- [ ] Access Token에서 `memberId` 파싱
+- [ ] Access Token에서 `userId` 파싱
 - [ ] DB에서 해당 회원의 Refresh Token 전체 삭제
 
 ### 4-4. 로그아웃 Controller
@@ -210,7 +210,7 @@
 ### 5-1. DB 마이그레이션
 - [ ] `V4__add_login_fail_columns.sql` 작성 (`login_fail_count INT DEFAULT 0`, `locked_until DATETIME NULL`)
 - [ ] 마이그레이션 적용 확인
-- [ ] `Member` 엔티티에 `loginFailCount`, `lockedUntil` 필드 추가
+- [ ] `User` 엔티티에 `loginFailCount`, `lockedUntil` 필드 추가
 
 ### 5-2. 계정 잠금 로직
 - [ ] 로그인 시도 시 `lockedUntil` 확인 → 잠금 중이면 `429 Too Many Requests` + `retryAfter` 반환

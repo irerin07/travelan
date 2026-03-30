@@ -1,4 +1,4 @@
-CREATE TABLE member
+CREATE TABLE users
 (
     id         BIGINT       NOT NULL AUTO_INCREMENT,
     email      VARCHAR(255) NOT NULL,
@@ -10,7 +10,7 @@ CREATE TABLE member
     created_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
-    UNIQUE KEY uk_member_email (email),
-    UNIQUE KEY uk_member_phone (phone),
-    UNIQUE KEY uk_member_nickname (nickname)
+    UNIQUE KEY uk_users_email (email),
+    UNIQUE KEY uk_users_phone (phone),
+    UNIQUE KEY uk_users_nickname (nickname)
 );

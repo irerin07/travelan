@@ -1,4 +1,4 @@
-package com.irerin.travelan.member.entity;
+package com.irerin.travelan.user.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -14,25 +14,25 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "member_interest_region")
+@Table(name = "user_interest_region")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class MemberInterestRegion {
+public class UserInterestRegion {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id", nullable = false)
-    private Member member;
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @Column(nullable = false, length = 100)
     private String region;
 
-    static MemberInterestRegion of(Member member, String region) {
-        MemberInterestRegion entity = new MemberInterestRegion();
-        entity.member = member;
+    static UserInterestRegion of(User user, String region) {
+        UserInterestRegion entity = new UserInterestRegion();
+        entity.user = user;
         entity.region = region;
         return entity;
     }

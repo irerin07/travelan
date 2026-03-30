@@ -32,7 +32,7 @@ com.irerin.travelan
 │   ├── repository
 │   ├── dto
 │   └── jwt
-├── member
+├── user
 │   ├── controller
 │   ├── service
 │   ├── repository
@@ -90,9 +90,9 @@ spring:
 
 #### 1-5. 엔티티 설계 및 DB 마이그레이션 (Flyway)
 
-**V1__create_member.sql**
+**V1__create_users.sql**
 ```sql
-CREATE TABLE member (
+CREATE TABLE users (
   id         BIGINT       NOT NULL AUTO_INCREMENT,
   email      VARCHAR(255) NOT NULL,
   password   VARCHAR(255) NOT NULL,
@@ -103,20 +103,20 @@ CREATE TABLE member (
   created_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
-  UNIQUE KEY uk_member_email    (email),
-  UNIQUE KEY uk_member_phone    (phone),
-  UNIQUE KEY uk_member_nickname (nickname)
+  UNIQUE KEY uk_users_email    (email),
+  UNIQUE KEY uk_users_phone    (phone),
+  UNIQUE KEY uk_users_nickname (nickname)
 );
 ```
 
-**V2__create_member_interest_region.sql**
+**V2__create_user_interest_region.sql**
 ```sql
-CREATE TABLE member_interest_region (
+CREATE TABLE user_interest_region (
   id        BIGINT       NOT NULL AUTO_INCREMENT,
-  member_id BIGINT       NOT NULL,
+  user_id BIGINT       NOT NULL,
   region    VARCHAR(100) NOT NULL,
   PRIMARY KEY (id),
-  CONSTRAINT fk_mir_member FOREIGN KEY (member_id) REFERENCES member(id)
+  CONSTRAINT fk_uir_user FOREIGN KEY (user_id) REFERENCES users(id)
 );
 ```
 
@@ -124,13 +124,13 @@ CREATE TABLE member_interest_region (
 ```sql
 CREATE TABLE refresh_token (
   id         BIGINT       NOT NULL AUTO_INCREMENT,
-  member_id  BIGINT       NOT NULL,
+  user_id  BIGINT       NOT NULL,
   token      VARCHAR(512) NOT NULL,
   expires_at DATETIME     NOT NULL,
   created_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   UNIQUE KEY uk_refresh_token (token),
-  CONSTRAINT fk_rt_member FOREIGN KEY (member_id) REFERENCES member(id)
+  CONSTRAINT fk_rt_user FOREIGN KEY (user_id) REFERENCES users(id)
 );
 ```
 
@@ -170,7 +170,7 @@ CREATE TABLE refresh_token (
 1. `@Valid` 유효성 검증
 2. 이메일/핸드폰/닉네임 중복 확인 → 중복 시 `409 Conflict`
 3. 비밀번호 BCrypt 해싱
-4. `Member` + `MemberInterestRegion` 저장
+4. `User` + `UserInterestRegion` 저장
 5. `201 Created` 반환
 
 #### 2-3. 중복 확인 API
@@ -194,7 +194,7 @@ CREATE TABLE refresh_token (
 ### 작업 목록
 
 #### 3-1. JWT 유틸리티 (`JwtProvider`)
-- Access Token 생성 (subject: `memberId`, 만료: 1시간)
+- Access Token 생성 (subject: `userId`, 만료: 1시간)
 - Refresh Token 생성 (만료: 30일)
 - 토큰 검증 / Claims 파싱
 
@@ -258,7 +258,7 @@ CREATE TABLE refresh_token (
 ### 작업 목록
 
 #### 5-1. 로그인 실패 횟수 추적
-- `Member` 테이블에 `login_fail_count INT`, `locked_until DATETIME` 컬럼 추가 (V4 마이그레이션)
+- `User` 테이블에 `login_fail_count INT`, `locked_until DATETIME` 컬럼 추가 (V4 마이그레이션)
 - 로그인 실패 시 `login_fail_count` 증가
 - 5회 연속 실패 시 `locked_until = now() + 30분` 설정
 

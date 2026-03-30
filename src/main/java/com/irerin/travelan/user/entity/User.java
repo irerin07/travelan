@@ -1,4 +1,4 @@
-package com.irerin.travelan.member.entity;
+package com.irerin.travelan.user.entity;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -25,11 +25,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "member")
+@Table(name = "users")
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Member {
+public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -52,7 +52,7 @@ public class Member {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private MemberStatus status = MemberStatus.ACTIVE;
+    private UserStatus status = UserStatus.ACTIVE;
 
     @CreatedDate
     @Column(nullable = false, updatable = false)
@@ -62,20 +62,20 @@ public class Member {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<MemberInterestRegion> interestRegions = new ArrayList<>();
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserInterestRegion> interestRegions = new ArrayList<>();
 
     @Builder
-    private Member(String email, String password, String name, String phone, String nickname) {
+    private User(String email, String password, String name, String phone, String nickname) {
         this.email = email;
         this.password = password;
         this.name = name;
         this.phone = phone;
         this.nickname = nickname;
-        this.status = MemberStatus.ACTIVE;
+        this.status = UserStatus.ACTIVE;
     }
 
     public void addInterestRegion(String region) {
-        this.interestRegions.add(MemberInterestRegion.of(this, region));
+        this.interestRegions.add(UserInterestRegion.of(this, region));
     }
 }

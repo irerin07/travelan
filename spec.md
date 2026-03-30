@@ -135,11 +135,11 @@ Travelan은 여행자들이 여행 경험을 공유하고 소통하는 커뮤니
 
 ## 6. 데이터 모델
 
-### Member (회원)
+### User (유저)
 
 | 컬럼 | 타입 | 제약 | 설명 |
 |------|------|------|------|
-| id | BIGINT | PK, AUTO_INCREMENT | 회원 고유 ID |
+| id | BIGINT | PK, AUTO_INCREMENT | 유저 고유 ID |
 | email | VARCHAR(255) | UNIQUE, NOT NULL | 로그인용 이메일 |
 | password | VARCHAR(255) | NOT NULL | BCrypt 해시값 |
 | name | VARCHAR(50) | NOT NULL | 실명 |
@@ -149,12 +149,12 @@ Travelan은 여행자들이 여행 경험을 공유하고 소통하는 커뮤니
 | created_at | DATETIME | NOT NULL | 가입일시 |
 | updated_at | DATETIME | NOT NULL | 수정일시 |
 
-### MemberInterestRegion (여행 관심 지역)
+### UserInterestRegion (여행 관심 지역)
 
 | 컬럼 | 타입 | 제약 | 설명 |
 |------|------|------|------|
 | id | BIGINT | PK | |
-| member_id | BIGINT | FK(Member) | |
+| user_id | BIGINT | FK(User) | |
 | region | VARCHAR(100) | NOT NULL | 관심 여행 지역명 |
 
 ### RefreshToken
@@ -162,7 +162,7 @@ Travelan은 여행자들이 여행 경험을 공유하고 소통하는 커뮤니
 | 컬럼 | 타입 | 제약 | 설명 |
 |------|------|------|------|
 | id | BIGINT | PK | |
-| member_id | BIGINT | FK(Member) | |
+| user_id | BIGINT | FK(User) | |
 | token | VARCHAR(512) | UNIQUE, NOT NULL | Refresh Token 값 |
 | expires_at | DATETIME | NOT NULL | 만료일시 |
 | created_at | DATETIME | NOT NULL | 발급일시 |

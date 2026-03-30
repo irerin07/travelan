@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import com.irerin.travelan.member.entity.Member;
+import com.irerin.travelan.user.entity.User;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -33,8 +33,8 @@ public class RefreshToken {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id", nullable = false)
-    private Member member;
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @Column(nullable = false, unique = true, length = 512)
     private String token;
@@ -46,9 +46,9 @@ public class RefreshToken {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    public static RefreshToken of(Member member, String token, LocalDateTime expiresAt) {
+    public static RefreshToken of(User user, String token, LocalDateTime expiresAt) {
         RefreshToken refreshToken = new RefreshToken();
-        refreshToken.member = member;
+        refreshToken.user = user;
         refreshToken.token = token;
         refreshToken.expiresAt = expiresAt;
         return refreshToken;
