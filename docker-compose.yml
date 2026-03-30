@@ -1,0 +1,30 @@
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: travelan
+      MYSQL_USER: travelan
+      MYSQL_PASSWORD: travelan
+      MYSQL_ROOT_PASSWORD: travelanroot
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-ptravelanroot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/travelan
+      SPRING_DATASOURCE_USERNAME: travelan
+      SPRING_DATASOURCE_PASSWORD: travelan
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+volumes:
+  mysql_data:
