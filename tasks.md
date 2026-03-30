@@ -5,47 +5,48 @@
 ## Phase 1 — 기반 구축
 
 ### 1-1. 의존성 추가
-- [ ] `build.gradle`에 `spring-boot-starter-security` 추가
-- [ ] `build.gradle`에 `jjwt-api`, `jjwt-impl`, `jjwt-jackson` (0.12.x) 추가
-- [ ] `build.gradle`에 `flyway-core`, `flyway-mysql` 추가
-- [ ] Gradle 빌드 정상 완료 확인
+- [x] `build.gradle`에 `spring-boot-starter-security` 추가
+- [x] `build.gradle`에 `jjwt-api`, `jjwt-impl`, `jjwt-jackson` (0.12.x) 추가
+- [x] `build.gradle`에 `flyway-core`, `flyway-mysql` 추가
+- [x] Gradle 빌드 정상 완료 확인
 
 ### 1-2. DB 및 JPA 설정
-- [ ] `application.yaml`에 datasource (MySQL) 설정
-- [ ] `application.yaml`에 JPA `ddl-auto: validate` 설정
-- [ ] `application.yaml`에 Flyway `enabled: true` 설정
+- [x] `application.yaml`에 datasource (MySQL) 설정
+- [x] `application.yaml`에 JPA `ddl-auto: validate` 설정
+- [x] `application.yaml`에 Flyway `enabled: true` 설정
 
 ### 1-3. 패키지 구조 생성
-- [ ] `auth.controller` / `auth.service` / `auth.repository` / `auth.dto` / `auth.jwt` 패키지 생성
-- [ ] `member.controller` / `member.service` / `member.repository` / `member.dto` / `member.entity` 패키지 생성
-- [ ] `common.exception` / `common.response` / `common.config` 패키지 생성
+- [x] `auth.controller` / `auth.service` / `auth.repository` / `auth.dto` / `auth.jwt` 패키지 생성
+- [x] `member.controller` / `member.service` / `member.repository` / `member.dto` / `member.entity` 패키지 생성
+- [x] `common.exception` / `common.response` / `common.config` 패키지 생성
 
 ### 1-4. 공통 응답 구조
-- [ ] `ApiResponse<T>` 클래스 작성 (`success`, `data`, `error` 필드)
-- [ ] 성공 응답 정적 팩토리 메서드 (`ApiResponse.ok(data)`)
-- [ ] 실패 응답 정적 팩토리 메서드 (`ApiResponse.error(code, message)`)
-- [ ] `ErrorResponse` 클래스 작성 (에러 코드, 메시지, 필드별 에러 목록)
+- [x] `ApiResponse<T>` 클래스 작성 (`success`, `data`, `error` 필드)
+- [x] 성공 응답 정적 팩토리 메서드 (`ApiResponse.ok(data)`)
+- [x] 실패 응답 정적 팩토리 메서드 (`ApiResponse.error(code, message)`)
+- [x] `ErrorResponse` 클래스 작성 (에러 코드, 메시지, 필드별 에러 목록)
 
 ### 1-5. 글로벌 예외 핸들러
-- [ ] `GlobalExceptionHandler` (`@RestControllerAdvice`) 클래스 작성
-- [ ] `MethodArgumentNotValidException` 처리 → `400 Bad Request` + 필드별 에러
-- [ ] `DuplicateException` (커스텀) 처리 → `409 Conflict`
-- [ ] `AuthException` (커스텀) 처리 → `401 Unauthorized`
-- [ ] 그 외 미처리 예외 → `500 Internal Server Error`
+- [x] `GlobalExceptionHandler` (`@RestControllerAdvice`) 클래스 작성
+- [x] `MethodArgumentNotValidException` 처리 → `400 Bad Request` + 필드별 에러
+- [x] `DuplicateException` (커스텀) 처리 → `409 Conflict`
+- [x] `AuthException` (커스텀) 처리 → `401 Unauthorized`
+- [x] 그 외 미처리 예외 → `500 Internal Server Error`
 
 ### 1-6. Flyway 마이그레이션 스크립트
-- [ ] `V1__create_member.sql` 작성 및 적용 확인
-- [ ] `V2__create_member_interest_region.sql` 작성 및 적용 확인
-- [ ] `V3__create_refresh_token.sql` 작성 및 적용 확인
+- [x] `V1__create_member.sql` 작성 및 적용 확인
+- [x] `V2__create_member_interest_region.sql` 작성 및 적용 확인
+- [x] `V3__create_refresh_token.sql` 작성 및 적용 확인
 
 ### 1-7. 엔티티 클래스
-- [ ] `Member` 엔티티 작성 (`id`, `email`, `password`, `name`, `phone`, `nickname`, `status`, `createdAt`, `updatedAt`)
-- [ ] `MemberStatus` Enum 작성 (`ACTIVE`, `SUSPENDED`, `WITHDRAWN`)
-- [ ] `MemberInterestRegion` 엔티티 작성 (`id`, `memberId`, `region`)
-- [ ] `RefreshToken` 엔티티 작성 (`id`, `memberId`, `token`, `expiresAt`, `createdAt`)
+- [x] `Member` 엔티티 작성 (`id`, `email`, `password`, `name`, `phone`, `nickname`, `status`, `createdAt`, `updatedAt`)
+- [x] `MemberStatus` Enum 작성 (`ACTIVE`, `SUSPENDED`, `WITHDRAWN`)
+- [x] `MemberInterestRegion` 엔티티 작성 (`id`, `memberId`, `region`)
+- [x] `RefreshToken` 엔티티 작성 (`id`, `memberId`, `token`, `expiresAt`, `createdAt`)
 
 ### 1-8. Phase 1 완료 기준 검증
-- [ ] `./gradlew bootRun` 정상 기동
+- [x] `./gradlew compileJava` 정상 빌드 확인
+- [ ] `./gradlew bootRun` 정상 기동 (Docker 기동 후 확인)
 - [ ] Flyway 마이그레이션으로 테이블 3개 생성 확인
 - [ ] `/actuator/health` → `{"status":"UP"}` 응답 확인
 

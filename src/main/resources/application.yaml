@@ -1,3 +1,27 @@
 spring:
   application:
     name: travelan
+  docker:
+    compose:
+      file: docker-compose.yml
+  datasource:
+    url: jdbc:mysql://localhost:3306/travelan?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: travelan
+    password: travelan
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
