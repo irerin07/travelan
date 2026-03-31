@@ -26,6 +26,11 @@ public class AdminUserController {
         @RequestParam(defaultValue = "1") int page,
         @RequestParam(defaultValue = "20") int size
     ) {
-        return ResponseEntity.ok(ApiResponse.ofPage(userService.findUsers(page, size), page));
+        return ResponseEntity.ok(
+            ApiResponse.<List<UserSummaryResponse>>builder()
+                .data(userService.findUsers(page, size))
+                .build()
+        );
     }
+
 }

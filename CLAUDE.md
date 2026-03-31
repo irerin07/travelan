@@ -17,6 +17,16 @@
 - 컨트롤러 응답으로 `Map<String, T>`를 사용하지 말 것
 - 단순한 값 하나라도 전용 DTO 클래스로 감쌀 것
 - 예: `{ "available": true }` → `AvailableResponse` 클래스 사용
+- **예외**: `ApiResponse.Builder`의 `.meta(String key, Object value)`는 허용. 응답 봉투(envelope) 내부의 추가 집계 메타데이터(totalCount, ratingAverage 등)를 키-값으로 추가할 때만 사용할 것
+  ```java
+  ApiResponse.<List<ReviewResponse>>builder()
+      .data(page.getContent())
+      .page(PageMeta.from(page, pageNumber))
+      .search(search)
+      .meta("totalCount", service.count(search))
+      .meta("ratingAverage", service.getRatingAverage(search))
+      .build();
+  ```
 
 ### 레이어 간 DTO 분리
 - 컨트롤러(웹 레이어) DTO를 서비스 레이어에 직접 전달하지 말 것
