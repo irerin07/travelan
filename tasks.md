@@ -55,53 +55,53 @@
 ## Phase 2 — 회원가입
 
 ### 2-1. Spring Security 기본 설정
-- [ ] `SecurityConfig` 클래스 작성
-- [ ] `/api/v1/auth/**` 인증 없이 허용 설정
-- [ ] CSRF 비활성화 설정
-- [ ] Session `STATELESS` 설정
-- [ ] `PasswordEncoder` Bean 등록 (BCrypt, cost 10)
+- [x] `SecurityConfig` 클래스 작성
+- [x] `/api/v1/auth/**` 인증 없이 허용 설정
+- [x] CSRF 비활성화 설정
+- [x] Session `STATELESS` 설정
+- [x] `PasswordEncoder` Bean 등록 (BCrypt, cost 10)
 
 ### 2-2. 커스텀 유효성 어노테이션
-- [ ] `@PasswordMatch` 어노테이션 및 `PasswordMatchValidator` 작성 (비밀번호 확인 일치 검증)
-- [ ] `@NoWhitespace` 어노테이션 또는 `@Pattern`으로 공백 불가 규칙 정의
+- [x] `@PasswordMatch` 어노테이션 및 `PasswordMatchValidator` 작성 (비밀번호 확인 일치 검증)
+- [x] `@NoWhitespace` 어노테이션 또는 `@Pattern`으로 공백 불가 규칙 정의
 
 ### 2-3. 회원가입 DTO
-- [ ] `SignupRequest` 작성 — 필드별 `@Valid` 어노테이션 적용
-  - [ ] `email`: `@NotBlank`, `@Email`
-  - [ ] `password`: `@NotBlank`, 8자 이상, 공백 불가 (`@Pattern`)
-  - [ ] `passwordConfirm`: `@NotBlank`, `@PasswordMatch`
-  - [ ] `name`: `@NotBlank`
-  - [ ] `phone`: `@NotBlank`, `@Pattern(regexp = "^010\\d{8}$")`
-  - [ ] `nickname`: `@NotBlank`, 2~10자, 공백 불가 (`@Pattern`)
-  - [ ] `interestRegions`: `@Size(max = 5)`
-- [ ] `SignupResponse` 작성 (`id`, `email`, `nickname`)
+- [x] `SignupRequest` 작성 — 필드별 `@Valid` 어노테이션 적용
+  - [x] `email`: `@NotBlank`, `@Email`
+  - [x] `password`: `@NotBlank`, 8자 이상, 공백 불가 (`@Pattern`)
+  - [x] `passwordConfirm`: `@NotBlank`, `@PasswordMatch`
+  - [x] `name`: `@NotBlank`
+  - [x] `phone`: `@NotBlank`, `@Pattern(regexp = "^010\\d{8}$")`
+  - [x] `nickname`: `@NotBlank`, 2~10자, 공백 불가 (`@Pattern`)
+  - [x] `interestRegions`: `@Size(max = 5)`
+- [x] `SignupResponse` 작성 (`id`, `email`, `nickname`)
 
 ### 2-4. 회원 Repository
-- [ ] `UserRepository` 인터페이스 작성
-  - [ ] `existsByEmail(String email)`
-  - [ ] `existsByPhone(String phone)`
-  - [ ] `existsByNicknameIgnoreCase(String nickname)`
-  - [ ] `findByEmail(String email)`
-- [ ] `UserInterestRegionRepository` 인터페이스 작성
+- [x] `UserRepository` 인터페이스 작성
+  - [x] `existsByEmail(String email)`
+  - [x] `existsByPhone(String phone)`
+  - [x] `existsByNicknameIgnoreCase(String nickname)`
+  - [x] `findByEmail(String email)`
+- [x] `UserInterestRegionRepository` 인터페이스 작성
 
 ### 2-5. 회원가입 Service
-- [ ] `UserService` 클래스 작성
-- [ ] 이메일 중복 확인 로직
-- [ ] 핸드폰 번호 중복 확인 로직
-- [ ] 닉네임 중복 확인 로직 (대소문자 무시)
-- [ ] 비밀번호 BCrypt 해싱
-- [ ] `User` 저장
-- [ ] `UserInterestRegion` 리스트 저장 (관심 지역 선택 시)
+- [x] `UserService` 클래스 작성
+- [x] 이메일 중복 확인 로직
+- [x] 핸드폰 번호 중복 확인 로직
+- [x] 닉네임 중복 확인 로직 (대소문자 무시)
+- [x] 비밀번호 BCrypt 해싱
+- [x] `User` 저장
+- [x] `UserInterestRegion` 리스트 저장 (관심 지역 선택 시)
 
 ### 2-6. 회원가입 Controller
-- [ ] `AuthController` 클래스 작성
-- [ ] `POST /api/v1/auth/signup` → `201 Created` 구현
+- [x] `AuthController` 클래스 작성
+- [x] `POST /api/v1/auth/signup` → `201 Created` 구현
 
 ### 2-7. 중복 확인 API
-- [ ] `GET /api/v1/auth/check-email?email={email}` 구현
-- [ ] `GET /api/v1/auth/check-phone?phone={phone}` 구현
-- [ ] `GET /api/v1/auth/check-nickname?nickname={nickname}` 구현
-- [ ] 응답 형식: `{ "available": true/false }`
+- [x] `GET /api/v1/auth/check-email?email={email}` 구현
+- [x] `GET /api/v1/auth/check-phone?phone={phone}` 구현
+- [x] `GET /api/v1/auth/check-nickname?nickname={nickname}` 구현
+- [x] 응답 형식: `{ "available": true/false }`
 
 ### 2-8. Phase 2 완료 기준 검증
 - [ ] 정상 가입 요청 → `201 Created` 확인
