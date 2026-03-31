@@ -24,3 +24,9 @@
 - 웹 레이어 DTO: `auth.dto` (예: `SignupRequest`)
 - 서비스 레이어 DTO: `{domain}.dto` (예: `user.dto.SignupCommand`)
 - 변환은 Command의 정적 팩토리 메서드 `from(request)`로 처리
+
+### 객체 생성 방식
+- `new` 연산자를 직접 사용하지 말 것
+- 엔티티: `@NoArgsConstructor(access = PROTECTED)` + `@Builder` private 생성자 + 정적 팩토리 메서드 `of(...)` 사용
+- DTO / 응답 객체: `@AllArgsConstructor(access = PRIVATE)` + 정적 팩토리 메서드 `from(...)` 또는 `of(...)` 사용
+- 예외 (`throw new ...`)·서드파티 클래스·컬렉션 필드 초기화(`new ArrayList<>()`)는 예외적으로 허용

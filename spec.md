@@ -119,6 +119,47 @@ Travelan은 여행자들이 여행 경험을 공유하고 소통하는 커뮤니
 - 핸드폰 번호 중복 확인 API (입력 완료 시 호출)
 - 닉네임 중복 확인 API (입력 완료 시 호출)
 
+### 4.6 관리자 API
+
+#### GET /api/v1/admin/users — 회원 목록 페이징 조회
+- 관리자 전용 엔드포인트
+- 인증 필요 (ADMIN 역할)
+- 미인증 시 `401 Unauthorized`, 비관리자 시 `403 Forbidden`
+
+**Query Parameters**
+
+| 파라미터 | 타입 | 기본값 | 설명 |
+|---------|------|--------|------|
+| page | int | 1 | 페이지 번호 (1부터 시작) |
+| size | int | 20 | 페이지당 항목 수 |
+
+**Response** `200 OK`
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "email": "user@example.com",
+      "name": "홍길동",
+      "phone": "01012345678",
+      "nickname": "여행자",
+      "status": "ACTIVE",
+      "role": "USER",
+      "createdAt": "2026-03-31T10:00:00"
+    }
+  ],
+  "page": {
+    "page": 1,
+    "size": 20,
+    "totalElements": 100,
+    "totalPages": 5
+  }
+}
+```
+
+> `data`는 콘텐츠 배열, `page`는 최상위 메타데이터. 오류 응답 시 `success: false`이면 `data`/`page` 필드 미포함.
+
 ---
 
 ## 5. 비기능 요구사항
@@ -146,6 +187,7 @@ Travelan은 여행자들이 여행 경험을 공유하고 소통하는 커뮤니
 | phone | VARCHAR(20) | UNIQUE, NOT NULL | 핸드폰 번호 (숫자만 저장, 예: 01012345678) |
 | nickname | VARCHAR(10) | UNIQUE, NOT NULL | 닉네임 |
 | status | ENUM | NOT NULL | ACTIVE / SUSPENDED / WITHDRAWN |
+| role | VARCHAR(10) | NOT NULL | USER / ADMIN (기본값: USER) |
 | created_at | DATETIME | NOT NULL | 가입일시 |
 | updated_at | DATETIME | NOT NULL | 수정일시 |
 
@@ -177,6 +219,7 @@ Travelan은 여행자들이 여행 경험을 공유하고 소통하는 커뮤니
 | POST | /api/v1/auth/login | 로그인 | 불필요 |
 | POST | /api/v1/auth/logout | 로그아웃 | Access Token |
 | POST | /api/v1/auth/refresh | 토큰 갱신 | Refresh Token (Cookie) |
+| GET | /api/v1/admin/users | 전체 회원 조회 | ADMIN 역할 |
 | GET | /api/v1/auth/check-email | 이메일 중복 확인 | 불필요 |
 | GET | /api/v1/auth/check-phone | 핸드폰 번호 중복 확인 | 불필요 |
 | GET | /api/v1/auth/check-nickname | 닉네임 중복 확인 | 불필요 |

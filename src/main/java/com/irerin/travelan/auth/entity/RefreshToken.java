@@ -18,6 +18,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -46,12 +47,19 @@ public class RefreshToken {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Builder
+    private RefreshToken(User user, String token, LocalDateTime expiresAt) {
+        this.user = user;
+        this.token = token;
+        this.expiresAt = expiresAt;
+    }
+
     public static RefreshToken of(User user, String token, LocalDateTime expiresAt) {
-        RefreshToken refreshToken = new RefreshToken();
-        refreshToken.user = user;
-        refreshToken.token = token;
-        refreshToken.expiresAt = expiresAt;
-        return refreshToken;
+        return RefreshToken.builder()
+            .user(user)
+            .token(token)
+            .expiresAt(expiresAt)
+            .build();
     }
 
     public boolean isExpired() {

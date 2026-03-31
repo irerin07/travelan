@@ -1,34 +1,38 @@
 package com.irerin.travelan.common.response;
 
+import java.util.List;
+
+import org.springframework.data.domain.Page;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 @Getter
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApiResponse<T> {
 
-    private boolean success;
-    private T data;
-    private ErrorResponse error;
+    private final boolean success;
+    private final T data;
+    private final PageMeta page;
+    private final ErrorResponse error;
 
     public static <T> ApiResponse<T> ok(T data) {
-        ApiResponse<T> response = new ApiResponse<>();
-        response.success = true;
-        response.data = data;
-        return response;
+        return new ApiResponse<>(true, data, null, null);
     }
 
     public static <T> ApiResponse<T> ok() {
-        ApiResponse<T> response = new ApiResponse<>();
-        response.success = true;
-        return response;
+        return new ApiResponse<>(true, null, null, null);
+    }
+
+    public static <T> ApiResponse<List<T>> ofPage(Page<T> pageResult, int pageNumber) {
+        return new ApiResponse<>(true, pageResult.getContent(), PageMeta.from(pageResult, pageNumber), null);
     }
 
     public static <T> ApiResponse<T> error(ErrorResponse errorResponse) {
-        ApiResponse<T> response = new ApiResponse<>();
-        response.success = false;
-        response.error = errorResponse;
-        return response;
+        return new ApiResponse<>(false, null, null, errorResponse);
     }
 }

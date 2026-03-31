@@ -20,28 +20,28 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<?>> handleValidation(MethodArgumentNotValidException ex) {
         List<ErrorResponse.FieldError> fieldErrors = ex.getBindingResult().getFieldErrors().stream()
-            .map(e -> new ErrorResponse.FieldError(e.getField(), e.getDefaultMessage()))
+            .map(e -> ErrorResponse.FieldError.of(e.getField(), e.getDefaultMessage()))
             .toList();
         return ResponseEntity.badRequest()
-            .body(ApiResponse.error(new ErrorResponse("VALIDATION_ERROR", "입력값이 올바르지 않습니다", fieldErrors)));
+            .body(ApiResponse.error(ErrorResponse.of("VALIDATION_ERROR", "입력값이 올바르지 않습니다", fieldErrors)));
     }
 
     @ExceptionHandler(DuplicateException.class)
     public ResponseEntity<ApiResponse<?>> handleDuplicate(DuplicateException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
-            .body(ApiResponse.error(new ErrorResponse("DUPLICATE", ex.getMessage())));
+            .body(ApiResponse.error(ErrorResponse.of("DUPLICATE", ex.getMessage())));
     }
 
     @ExceptionHandler(AuthException.class)
     public ResponseEntity<ApiResponse<?>> handleAuth(AuthException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-            .body(ApiResponse.error(new ErrorResponse("UNAUTHORIZED", ex.getMessage())));
+            .body(ApiResponse.error(ErrorResponse.of("UNAUTHORIZED", ex.getMessage())));
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<?>> handleException(Exception ex) {
         log.error("Unhandled exception", ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-            .body(ApiResponse.error(new ErrorResponse("INTERNAL_ERROR", "서버 오류가 발생했습니다")));
+            .body(ApiResponse.error(ErrorResponse.of("INTERNAL_ERROR", "서버 오류가 발생했습니다")));
     }
 }

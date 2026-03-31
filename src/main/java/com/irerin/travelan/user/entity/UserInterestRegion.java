@@ -10,6 +10,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -30,10 +31,17 @@ public class UserInterestRegion {
     @Column(nullable = false, length = 100)
     private String region;
 
-    static UserInterestRegion of(User user, String region) {
-        UserInterestRegion entity = new UserInterestRegion();
-        entity.user = user;
-        entity.region = region;
-        return entity;
+    @Builder
+    private UserInterestRegion(User user, String region) {
+        this.user = user;
+        this.region = region;
     }
+
+    static UserInterestRegion of(User user, String region) {
+        return UserInterestRegion.builder()
+            .user(user)
+            .region(region)
+            .build();
+    }
+
 }

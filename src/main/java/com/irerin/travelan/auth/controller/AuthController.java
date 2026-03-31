@@ -34,16 +34,16 @@ public class AuthController {
 
     @GetMapping("/check-email")
     public ResponseEntity<ApiResponse<AvailableResponse>> checkEmail(@RequestParam String email) {
-        return ResponseEntity.ok(ApiResponse.ok(new AvailableResponse(userService.isEmailAvailable(email))));
+        return ResponseEntity.ok(ApiResponse.ok(AvailableResponse.of(userService.isEmailAvailable(email))));
     }
 
     @GetMapping("/check-phone")
     public ResponseEntity<ApiResponse<AvailableResponse>> checkPhone(@RequestParam String phone) {
-        return ResponseEntity.ok(ApiResponse.ok(new AvailableResponse(userService.isPhoneAvailable(phone))));
+        return ResponseEntity.ok(ApiResponse.ok(AvailableResponse.of(userService.isPhoneAvailable(phone))));
     }
 
     @GetMapping("/check-nickname")
     public ResponseEntity<ApiResponse<AvailableResponse>> checkNickname(@RequestParam String nickname) {
-        return ResponseEntity.ok(ApiResponse.ok(new AvailableResponse(userService.isNicknameAvailable(nickname))));
+        return ResponseEntity.ok(ApiResponse.ok(AvailableResponse.of(userService.isNicknameAvailable(nickname))));
     }
 }

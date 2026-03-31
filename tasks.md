@@ -114,6 +114,50 @@
 
 ---
 
+## Phase 2.5 — 관리자: 전체 회원 조회 API
+
+### 2.5-1. UserRole 도입
+- [x] `UserRole` Enum 작성 (`USER`, `ADMIN`)
+- [x] `User` 엔티티에 `role` 필드 추가 (`@Enumerated(EnumType.STRING)`, 기본값 `USER`)
+- [x] `V5__add_role_to_users.sql` 마이그레이션 스크립트 작성
+
+### 2.5-2. SecurityConfig RBAC 설정
+- [x] `/api/v1/admin/**` 경로에 `hasRole("ADMIN")` 추가
+- [x] `authenticationEntryPoint` — JSON 401 응답 핸들러 추가
+- [x] `accessDeniedHandler` — JSON 403 응답 핸들러 추가
+
+### 2.5-3. PageMeta DTO
+- [x] `common.response.PageMeta` 작성
+- [x] 필드: `page`, `size`, `totalElements`, `totalPages`
+- [x] 정적 팩토리 메서드 `from(Page<?>, int pageNumber)` 작성
+- [x] `ApiResponse`에 `page` 필드 추가, `ofPage(Page<T>, int)` 팩토리 추가, `@JsonInclude(NON_NULL)` 적용
+
+### 2.5-4. UserSummaryResponse DTO
+- [x] `admin.dto.UserSummaryResponse` 작성
+- [x] 필드: `id`, `email`, `name`, `phone`, `nickname`, `status`, `role`, `createdAt`
+- [x] 정적 팩토리 메서드 `from(User)` 작성
+
+### 2.5-5. UserService 확장
+- [x] `findUsers(int page, int size)` 메서드 추가 (`readOnly = true`, 1-indexed → 0-indexed 변환)
+
+### 2.5-6. AdminUserController 작성
+- [x] `user.controller.AdminUserController` 클래스 작성
+- [x] `GET /api/v1/admin/users` — `page`(기본값 1), `size`(기본값 20) 파라미터
+- [x] 응답: `200 OK` + `PageResponse<UserSummaryResponse>`
+
+### 2.5-7. TDD 테스트
+- [x] `AdminUserControllerTest` — ADMIN 200(페이지 메타 포함), 파라미터 적용, 빈페이지, USER 403, 미인증 401
+- [x] `UserServiceTest` — `findUsers` 목록반환, 빈페이지, DTO 필드 매핑, 1-indexed 페이지 확인
+
+### 2.5-8. Phase 2.5 완료 기준 검증
+- [x] ADMIN MockUser → `200 OK` + `data.content`, `data.page`, `data.totalElements` 포함 확인
+- [x] `?page=2&size=5` 파라미터 적용 확인
+- [x] USER MockUser → `403 Forbidden` + `FORBIDDEN` 에러코드 확인
+- [x] 미인증 → `401 Unauthorized` + `UNAUTHORIZED` 에러코드 확인
+- [x] 서비스 단위 테스트 전체 통과
+
+---
+
 ## Phase 3 — 로그인 & JWT 발급
 
 ### 3-1. JWT 설정

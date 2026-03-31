@@ -44,7 +44,7 @@ class AuthControllerTest {
             .nickname("여행자")
             .build();
         ReflectionTestUtils.setField(user, "id", 1L);
-        signupResponse = new SignupResponse(user);
+        signupResponse = SignupResponse.from(user);
     }
 
     private String validSignupJson() {

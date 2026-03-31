@@ -187,6 +187,40 @@ CREATE TABLE refresh_token (
 
 ---
 
+## Phase 2.5 — 관리자: 전체 회원 조회 API
+
+> 관리자 전용 API 기반 구축. JWT 구현 전이므로 테스트에서는 MockUser 기반 인증으로 검증.
+
+### 작업 목록
+
+#### 2.5-1. UserRole 도입
+- `UserRole` Enum 추가 (`USER`, `ADMIN`)
+- `User` 엔티티에 `role` 필드 추가 (기본값: `USER`)
+- `V5__add_role_to_users.sql` Flyway 마이그레이션
+
+#### 2.5-2. SecurityConfig RBAC 추가
+- `/api/v1/admin/**` → `hasRole("ADMIN")`
+- 미인증 시 JSON 401, 권한 없음 시 JSON 403 응답
+
+#### 2.5-3. `GET /api/v1/admin/users`
+| 항목 | 내용 |
+|------|------|
+| Request | `page` (기본값: 1), `size` (기본값: 20) 쿼리 파라미터 |
+| Response | `200 OK` — 페이지 결과 (`content`, `page`, `size`, `totalElements`, `totalPages`) |
+
+- `UserSummaryResponse` DTO (`admin.dto` 패키지) — 필드: `id`, `email`, `name`, `phone`, `nickname`, `status`, `role`, `createdAt`
+- `PageMeta` DTO (`common.response` 패키지) — 페이지 메타데이터 (`page`, `size`, `totalElements`, `totalPages`)
+- `ApiResponse.ofPage(Page<T>, int pageNumber)` 팩토리 — `data`(콘텐츠 배열)와 `page`(메타) 최상위 분리
+- `UserService.findUsers(int page, int size)` — `Page<UserSummaryResponse>` 반환 (1-indexed → 0-indexed 변환)
+- `AdminUserController` (`user.controller` 패키지)
+
+### 완료 기준
+- ADMIN 역할 사용자 → `200 OK` + 전체 회원 목록
+- USER 역할 사용자 → `403 Forbidden`
+- 미인증 요청 → `401 Unauthorized`
+
+---
+
 ## Phase 3 — 로그인 & JWT 발급
 
 > 이메일/비밀번호로 로그인하여 Access Token과 Refresh Token을 발급받는다
