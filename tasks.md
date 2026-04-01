@@ -161,68 +161,74 @@
 ## Phase 3 — 로그인 & JWT 발급
 
 ### 3-1. JWT 설정
-- [ ] `application.yaml`에 JWT secret key, access-token 만료, refresh-token 만료 설정
-- [ ] `JwtProperties` (`@ConfigurationProperties`) 클래스 작성
+- [x] `application.yaml`에 JWT secret key, access-token 만료(15분), refresh-token 만료(30일) 설정
+- [x] `JwtProperties` (`@ConfigurationProperties`) 클래스 작성
 
 ### 3-2. JwtProvider
-- [ ] `JwtProvider` 클래스 작성
-- [ ] Access Token 생성 메서드 (subject: `userId`, 만료: 1시간)
-- [ ] Refresh Token 생성 메서드 (만료: 30일)
-- [ ] 토큰 유효성 검증 메서드
-- [ ] 토큰에서 `userId` 파싱 메서드
-- [ ] 토큰 만료 여부 확인 메서드
+- [x] `JwtProvider` 클래스 작성
+- [x] Access Token 생성 메서드 (subject: `userId`, 만료: 15분)
+- [x] Refresh Token 생성 메서드 (만료: 30일)
+- [x] 토큰 유효성 검증 메서드
+- [x] 토큰에서 `userId` 파싱 메서드
+- [x] 토큰에서 `role` 파싱 메서드
 
 ### 3-3. RefreshToken Repository
-- [ ] `RefreshTokenRepository` 인터페이스 작성
-  - [ ] `findByToken(String token)`
-  - [ ] `findByUserId(Long userId)`
-  - [ ] `deleteByUserId(Long userId)`
+- [x] `RefreshTokenRepository` 인터페이스 작성
+  - [x] `findByToken(String token)`
+  - [x] `deleteByUser(User user)`
 
 ### 3-4. 로그인 DTO
-- [ ] `LoginRequest` 작성 (`email`, `password`)
-- [ ] `LoginResponse` 작성 (`accessToken`, `tokenType`, `expiresIn`)
+- [x] `LoginRequest` 작성 (`email`, `password`)
+- [x] `LoginCommand` 작성 (서비스 레이어 전달용)
+- [x] `LoginTokens` 작성 (서비스 레이어 결과)
+- [x] `LoginResponse` 작성 (`accessToken`, `tokenType`, `expiresIn`)
 
 ### 3-5. 로그인 Service
-- [ ] `AuthService` 클래스 작성
-- [ ] 이메일로 회원 조회 → 미존재 시 `AuthException` 발생
-- [ ] BCrypt 비밀번호 검증 → 불일치 시 `AuthException` 발생
-- [ ] Access Token 생성
-- [ ] Refresh Token 생성 → DB 저장
-- [ ] Refresh Token 반환
+- [x] `AuthService` 클래스 작성
+- [x] 이메일로 회원 조회 → 미존재 시 `AuthException` 발생
+- [x] BCrypt 비밀번호 검증 → 불일치 시 `AuthException` 발생
+- [x] ACTIVE 상태 검증
+- [x] Access Token / Refresh Token 생성 → DB 저장
 
 ### 3-6. 로그인 Controller
-- [ ] `POST /api/v1/auth/login` 구현
-- [ ] Refresh Token → `HttpOnly; Secure; SameSite=Strict` Cookie 설정
-- [ ] Access Token → 응답 body 반환
-- [ ] 실패 시 이메일/비밀번호 구분 없는 단일 에러 메시지 반환
+- [x] `POST /api/v1/auth/login` 구현
+- [x] Refresh Token → `HttpOnly; Secure; SameSite=Strict` Cookie 설정
+- [x] Access Token → 응답 body 반환
+- [x] 실패 시 이메일/비밀번호 구분 없는 단일 에러 메시지 반환
 
 ### 3-7. JWT 인증 필터
-- [ ] `JwtAuthenticationFilter` (`OncePerRequestFilter`) 작성
-- [ ] `Authorization: Bearer {token}` 헤더 추출 로직
-- [ ] 유효한 토큰이면 `UsernamePasswordAuthenticationToken` 생성 후 `SecurityContextHolder` 설정
-- [ ] 무효/만료 토큰 → 필터 체인 통과 (컨트롤러에서 `401` 처리)
-- [ ] `SecurityConfig`에 필터 등록 (`addFilterBefore`)
+- [x] `JwtAuthenticationFilter` (`OncePerRequestFilter`) 작성
+- [x] `Authorization: Bearer {token}` 헤더 추출 로직
+- [x] 유효한 토큰이면 `UsernamePasswordAuthenticationToken` 생성 후 `SecurityContextHolder` 설정
+- [x] 무효/만료 토큰 → 필터 체인 통과 (Entry Point가 401 처리)
+- [x] `SecurityConfig`에 필터 등록 (`addFilterBefore`)
 
 ### 3-8. Phase 3 완료 기준 검증
-- [ ] 정상 로그인 → `200 OK` + Access Token 반환 확인
-- [ ] 정상 로그인 → Refresh Token Cookie `Set-Cookie` 헤더 확인
-- [ ] 잘못된 이메일 → `401` 단일 메시지 확인
-- [ ] 잘못된 비밀번호 → `401` 단일 메시지 확인
-- [ ] 발급받은 Access Token으로 인증 필요 API 호출 성공 확인
-- [ ] 토큰 없이 인증 필요 API 호출 → `401` 확인
+- [x] 정상 로그인 → `200 OK` + Access Token 반환 확인
+- [x] 정상 로그인 → Refresh Token Cookie `Set-Cookie` 헤더 확인
+- [x] 잘못된 이메일 → `401` 단일 메시지 확인
+- [x] 잘못된 비밀번호 → `401` 단일 메시지 확인
+- [x] 발급받은 Access Token으로 인증 필요 API 호출 성공 확인
+- [x] 토큰 없이 인증 필요 API 호출 → `401` 확인
 
 ---
 
 ## Phase 4 — 토큰 갱신 & 로그아웃
 
+### 4-0. RefreshToken 모델 보강 (완료)
+- [x] `RefreshToken` 엔티티에 `revoked boolean` 필드 추가
+- [x] `revoke()` 메서드 추가
+- [x] `isUsable()` 메서드 추가 (`!revoked && !isExpired()`)
+- [x] `V6__add_revoked_to_refresh_token.sql` 마이그레이션 추가
+
 ### 4-1. 토큰 갱신 Service
-- [ ] `AuthService`에 `refresh()` 메서드 추가
+- [ ] `AuthService`에 `refresh()` 메서드 추가 (`@Transactional` 필수)
 - [ ] Cookie에서 Refresh Token 추출
-- [ ] DB에서 Refresh Token 존재 여부 확인 → 없으면 `401`
-- [ ] Refresh Token 만료 여부 확인 → 만료 시 `401`
+- [ ] DB에서 Refresh Token 조회 → 없으면 `401`
+- [ ] `isUsable()` 확인 → 만료 또는 revoked이면 `401`
 - [ ] 새 Access Token 생성
-- [ ] Refresh Token Rotation: 새 Refresh Token 발급 → 기존 토큰 교체 (DB 업데이트)
-- [ ] 재사용 감지 (이미 삭제된 토큰으로 요청 시) → 해당 회원 전체 Refresh Token 삭제 + `401`
+- [ ] Refresh Token Rotation: `stored.revoke()` + 새 Refresh Token 저장 (원자적 처리)
+- [ ] 재사용 감지 (이미 `revoked`된 토큰으로 요청 시) → 해당 회원 전체 토큰 revoke + `401`
 
 ### 4-2. 토큰 갱신 Controller
 - [ ] `POST /api/v1/auth/refresh` 구현
@@ -252,7 +258,7 @@
 ## Phase 5 — 로그인 보안 강화
 
 ### 5-1. DB 마이그레이션
-- [ ] `V4__add_login_fail_columns.sql` 작성 (`login_fail_count INT DEFAULT 0`, `locked_until DATETIME NULL`)
+- [ ] `V7__add_login_fail_columns.sql` 작성 (`login_fail_count INT DEFAULT 0`, `locked_until DATETIME NULL`)
 - [ ] 마이그레이션 적용 확인
 - [ ] `User` 엔티티에 `loginFailCount`, `lockedUntil` 필드 추가
 

@@ -1,0 +1,2 @@
+ALTER TABLE refresh_token
+    ADD COLUMN revoked TINYINT(1) NOT NULL DEFAULT 0;

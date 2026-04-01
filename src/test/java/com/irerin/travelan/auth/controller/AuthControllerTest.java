@@ -1,10 +1,12 @@
 package com.irerin.travelan.auth.controller;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -18,12 +20,19 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.irerin.travelan.auth.dto.LoginCommand;
+import com.irerin.travelan.auth.dto.LoginTokens;
 import com.irerin.travelan.auth.dto.SignupResponse;
+import com.irerin.travelan.auth.jwt.JwtProvider;
+import com.irerin.travelan.auth.service.AuthService;
 import com.irerin.travelan.common.config.SecurityConfig;
+import com.irerin.travelan.common.exception.AuthException;
 import com.irerin.travelan.common.exception.DuplicateException;
 import com.irerin.travelan.user.dto.SignupCommand;
 import com.irerin.travelan.user.entity.User;
 import com.irerin.travelan.user.service.UserService;
+
+import org.springframework.http.HttpHeaders;
 
 @WebMvcTest(controllers = AuthController.class)
 @Import(SecurityConfig.class)
@@ -31,6 +40,8 @@ class AuthControllerTest {
 
     @Autowired MockMvc mockMvc;
     @MockitoBean UserService userService;
+    @MockitoBean AuthService authService;
+    @MockitoBean JwtProvider jwtProvider;
 
     private SignupResponse signupResponse;
 
@@ -249,5 +260,52 @@ class AuthControllerTest {
         mockMvc.perform(get("/api/v1/auth/check-nickname").param("nickname", "새닉"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.available").value(true));
+    }
+
+    // ── POST /api/v1/auth/login ──────────────────────────────────────────────
+
+    @Test
+    void login_성공_200_accessToken_반환() throws Exception {
+        given(authService.login(any(LoginCommand.class)))
+            .willReturn(LoginTokens.of("access-token", "refresh-token", 3600L));
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    { "email": "test@example.com", "password": "Password1!" }
+                    """))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.success").value(true))
+            .andExpect(jsonPath("$.data.accessToken").value("access-token"))
+            .andExpect(jsonPath("$.data.tokenType").value("Bearer"))
+            .andExpect(jsonPath("$.data.expiresIn").value(3600))
+            .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("refreshToken=refresh-token")))
+            .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("HttpOnly")));
+    }
+
+    @Test
+    void login_잘못된_자격증명_401반환() throws Exception {
+        willThrow(new AuthException("이메일 또는 비밀번호가 올바르지 않습니다"))
+            .given(authService).login(any(LoginCommand.class));
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    { "email": "test@example.com", "password": "wrongPassword" }
+                    """))
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.success").value(false))
+            .andExpect(jsonPath("$.error.code").value("UNAUTHORIZED"));
+    }
+
+    @Test
+    void login_이메일_빈값_400반환() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    { "email": "", "password": "Password1!" }
+                    """))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"));
     }
 }

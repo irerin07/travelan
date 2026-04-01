@@ -23,6 +23,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.irerin.travelan.admin.dto.UserSummaryResponse;
+import com.irerin.travelan.auth.jwt.JwtProvider;
 import com.irerin.travelan.common.config.SecurityConfig;
 import com.irerin.travelan.user.entity.User;
 import com.irerin.travelan.user.entity.UserRole;
@@ -35,6 +36,7 @@ class AdminUserControllerTest {
 
     @Autowired MockMvc mockMvc;
     @MockitoBean UserService userService;
+    @MockitoBean JwtProvider jwtProvider;
 
     private Page<UserSummaryResponse> pagedResult;
 

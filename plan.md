@@ -18,7 +18,7 @@
 | Boilerplate | Lombok | - | |
 
 ### 인증 방식
-- **Access Token**: JWT, 유효기간 1시간, `Authorization: Bearer {token}` 헤더로 전달
+- **Access Token**: JWT, 유효기간 15분, `Authorization: Bearer {token}` 헤더로 전달
 - **Refresh Token**: JWT, 유효기간 30일, `HttpOnly Cookie`로 전달, DB에 저장하여 유효성 관리
 - **비밀번호**: BCrypt (cost factor 10) 해싱 후 저장
 
@@ -228,7 +228,7 @@ CREATE TABLE refresh_token (
 ### 작업 목록
 
 #### 3-1. JWT 유틸리티 (`JwtProvider`)
-- Access Token 생성 (subject: `userId`, 만료: 1시간)
+- Access Token 생성 (subject: `userId`, 만료: 15분)
 - Refresh Token 생성 (만료: 30일)
 - 토큰 검증 / Claims 파싱
 

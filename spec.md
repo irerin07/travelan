@@ -89,7 +89,7 @@ Travelan은 여행자들이 여행 경험을 공유하고 소통하는 커뮤니
 
 | 토큰 | 유효 기간 | 저장 위치 | 설명 |
 |------|-----------|-----------|------|
-| Access Token | 1시간 | 클라이언트 메모리 | API 호출 시 Authorization 헤더에 포함 |
+| Access Token | 15분 | 클라이언트 메모리 | API 호출 시 Authorization 헤더에 포함 |
 | Refresh Token | 30일 | HttpOnly Cookie | Access Token 갱신에 사용 |
 
 #### 실패 처리
@@ -263,7 +263,7 @@ Travelan은 여행자들이 여행 경험을 공유하고 소통하는 커뮤니
 {
   "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
   "tokenType": "Bearer",
-  "expiresIn": 3600
+  "expiresIn": 900
 }
 ```
 
@@ -278,7 +278,7 @@ Travelan은 여행자들이 여행 경험을 공유하고 소통하는 커뮤니
 {
   "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
   "tokenType": "Bearer",
-  "expiresIn": 3600
+  "expiresIn": 900
 }
 ```
 
