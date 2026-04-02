@@ -4,13 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,25 +27,36 @@ import org.springframework.data.domain.Page;
 
 import com.irerin.travelan.admin.dto.UserSummaryResponse;
 import com.irerin.travelan.auth.dto.SignupResponse;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
+
 import com.irerin.travelan.common.exception.DuplicateException;
 import com.irerin.travelan.user.dto.SignupCommand;
 import com.irerin.travelan.user.entity.User;
+import com.irerin.travelan.user.entity.UserAction;
+import com.irerin.travelan.user.entity.UserHistory;
 import com.irerin.travelan.user.entity.UserRole;
 import com.irerin.travelan.user.entity.UserStatus;
+import com.irerin.travelan.user.repository.UserHistoryRepository;
 import com.irerin.travelan.user.repository.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
 
     @Mock UserRepository userRepository;
+    @Mock UserHistoryRepository userHistoryRepository;
     @Mock PasswordEncoder passwordEncoder;
-    @InjectMocks UserService userService;
+
+    private UserService userService;
 
     private SignupCommand command;
 
     @BeforeEach
     void setUp() {
-        command = new SignupCommand(
+        Clock clock = Clock.fixed(Instant.parse("2026-04-01T12:00:00Z"), ZoneId.of("Asia/Seoul"));
+        userService = new UserService(userRepository, userHistoryRepository, passwordEncoder, clock);
+        command = SignupCommand.of(
             "test@example.com", "Password1!", "홍길동", "01012345678", "여행자",
             List.of("서울", "부산")
         );
@@ -68,9 +77,9 @@ class UserServiceTest {
 
     /** 중복 없음 상태를 stub하는 헬퍼 */
     private void stubNoDuplicate() {
-        given(userRepository.existsByEmailAndStatusNot(anyString(), eq(UserStatus.WITHDRAWN))).willReturn(false);
-        given(userRepository.existsByPhoneAndStatusNot(anyString(), eq(UserStatus.WITHDRAWN))).willReturn(false);
-        given(userRepository.existsByNicknameIgnoreCaseAndStatusNot(anyString(), eq(UserStatus.WITHDRAWN))).willReturn(false);
+        given(userRepository.existsByEmail(anyString())).willReturn(false);
+        given(userRepository.existsByPhone(anyString())).willReturn(false);
+        given(userRepository.existsByNicknameIgnoreCase(anyString())).willReturn(false);
     }
 
     // ── signup ──────────────────────────────────────────────────────────────
@@ -116,7 +125,7 @@ class UserServiceTest {
 
     @Test
     void signup_관심지역_없이도_가입된다() {
-        SignupCommand noRegion = new SignupCommand(
+        SignupCommand noRegion = SignupCommand.of(
             "test@example.com", "Password1!", "홍길동", "01012345678", "여행자", null
         );
         stubNoDuplicate();
@@ -131,8 +140,8 @@ class UserServiceTest {
     }
 
     @Test
-    void signup_ACTIVE_이메일_중복이면_DuplicateException() {
-        given(userRepository.existsByEmailAndStatusNot(command.getEmail(), UserStatus.WITHDRAWN)).willReturn(true);
+    void signup_이메일_중복이면_DuplicateException() {
+        given(userRepository.existsByEmail(command.getEmail())).willReturn(true);
 
         assertThatThrownBy(() -> userService.signup(command))
             .isInstanceOf(DuplicateException.class)
@@ -141,69 +150,23 @@ class UserServiceTest {
     }
 
     @Test
-    void signup_SUSPENDED_이메일이면_DuplicateException() {
-        // SUSPENDED 회원도 StatusNot(WITHDRAWN) 체크에서 걸림
-        given(userRepository.existsByEmailAndStatusNot(command.getEmail(), UserStatus.WITHDRAWN)).willReturn(true);
-
-        assertThatThrownBy(() -> userService.signup(command))
-            .isInstanceOf(DuplicateException.class)
-            .hasMessage("이미 사용 중인 이메일입니다");
-        verify(userRepository, never()).save(any());
-    }
-
-    @Test
-    void signup_WITHDRAWN_이메일로_재가입_가능() {
-        // WITHDRAWN 회원 이메일은 StatusNot(WITHDRAWN) 체크를 통과
-        given(userRepository.existsByEmailAndStatusNot(command.getEmail(), UserStatus.WITHDRAWN)).willReturn(false);
-        given(userRepository.existsByPhoneAndStatusNot(command.getPhone(), UserStatus.WITHDRAWN)).willReturn(false);
-        given(userRepository.existsByNicknameIgnoreCaseAndStatusNot(command.getNickname(), UserStatus.WITHDRAWN)).willReturn(false);
-
-        // 기존 WITHDRAWN 레코드가 이메일로 조회됨
-        User withdrawnUser = User.builder()
-            .email(command.getEmail()).password("old").name("구회원").phone("01099999999").nickname("구닉네임")
-            .build();
-        ReflectionTestUtils.setField(withdrawnUser, "id", 99L);
-        given(userRepository.findByEmail(command.getEmail())).willReturn(Optional.of(withdrawnUser));
-        given(userRepository.findByPhone(command.getPhone())).willReturn(Optional.empty());
-        given(userRepository.findByNicknameIgnoreCase(command.getNickname())).willReturn(Optional.empty());
-
+    void signup_WITHDRAWN_이메일은_익명화되어_중복_아님() {
+        // WITHDRAWN 유저의 이메일은 "withdrawn_99@deleted"로 익명화되므로
+        // 원래 이메일로 existsByEmail하면 false → 재가입 가능
+        stubNoDuplicate();
         given(passwordEncoder.encode(anyString())).willReturn("encoded");
         given(userRepository.save(any())).willReturn(buildSavedUser());
 
         SignupResponse response = userService.signup(command);
 
-        // WITHDRAWN 레코드가 삭제되고 신규 회원이 저장됨
-        verify(userRepository).delete(withdrawnUser);
         assertThat(response.getEmail()).isEqualTo("test@example.com");
-    }
-
-    @Test
-    void signup_WITHDRAWN_전화번호로_재가입시_기존레코드_삭제() {
-        given(userRepository.existsByEmailAndStatusNot(command.getEmail(), UserStatus.WITHDRAWN)).willReturn(false);
-        given(userRepository.existsByPhoneAndStatusNot(command.getPhone(), UserStatus.WITHDRAWN)).willReturn(false);
-        given(userRepository.existsByNicknameIgnoreCaseAndStatusNot(command.getNickname(), UserStatus.WITHDRAWN)).willReturn(false);
-
-        User withdrawnUser = User.builder()
-            .email("old@example.com").password("old").name("구회원").phone(command.getPhone()).nickname("구닉네임")
-            .build();
-        ReflectionTestUtils.setField(withdrawnUser, "id", 99L);
-
-        given(userRepository.findByEmail(command.getEmail())).willReturn(Optional.empty());
-        given(userRepository.findByPhone(command.getPhone())).willReturn(Optional.of(withdrawnUser));
-        given(userRepository.findByNicknameIgnoreCase(command.getNickname())).willReturn(Optional.empty());
-
-        given(passwordEncoder.encode(anyString())).willReturn("encoded");
-        given(userRepository.save(any())).willReturn(buildSavedUser());
-
-        userService.signup(command);
-
-        verify(userRepository).delete(withdrawnUser);
+        verify(userRepository, never()).delete(any());
     }
 
     @Test
     void signup_핸드폰번호_중복이면_DuplicateException() {
-        given(userRepository.existsByEmailAndStatusNot(anyString(), eq(UserStatus.WITHDRAWN))).willReturn(false);
-        given(userRepository.existsByPhoneAndStatusNot(command.getPhone(), UserStatus.WITHDRAWN)).willReturn(true);
+        given(userRepository.existsByEmail(anyString())).willReturn(false);
+        given(userRepository.existsByPhone(command.getPhone())).willReturn(true);
 
         assertThatThrownBy(() -> userService.signup(command))
             .isInstanceOf(DuplicateException.class)
@@ -213,9 +176,9 @@ class UserServiceTest {
 
     @Test
     void signup_닉네임_중복이면_DuplicateException() {
-        given(userRepository.existsByEmailAndStatusNot(anyString(), eq(UserStatus.WITHDRAWN))).willReturn(false);
-        given(userRepository.existsByPhoneAndStatusNot(anyString(), eq(UserStatus.WITHDRAWN))).willReturn(false);
-        given(userRepository.existsByNicknameIgnoreCaseAndStatusNot(command.getNickname(), UserStatus.WITHDRAWN)).willReturn(true);
+        given(userRepository.existsByEmail(anyString())).willReturn(false);
+        given(userRepository.existsByPhone(anyString())).willReturn(false);
+        given(userRepository.existsByNicknameIgnoreCase(command.getNickname())).willReturn(true);
 
         assertThatThrownBy(() -> userService.signup(command))
             .isInstanceOf(DuplicateException.class)
@@ -223,71 +186,111 @@ class UserServiceTest {
         verify(userRepository, never()).save(any());
     }
 
+    @Test
+    void signup_중복_관심지역은_제거되어_저장된다() {
+        SignupCommand dupRegion = SignupCommand.of(
+            "test@example.com", "Password1!", "홍길동", "01012345678", "여행자",
+            List.of("유럽", "유럽", "동남아")
+        );
+        stubNoDuplicate();
+        given(passwordEncoder.encode(anyString())).willReturn("encoded");
+        given(userRepository.save(any())).willReturn(buildSavedUser());
+
+        userService.signup(dupRegion);
+
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(captor.capture());
+        assertThat(captor.getValue().getInterestRegions()).hasSize(2);
+    }
+
+    // ── signup history ───────────────────────────────────────────────────────
+
+    @Test
+    void signup_성공시_SIGNUP_이력이_저장된다() {
+        stubNoDuplicate();
+        given(passwordEncoder.encode(anyString())).willReturn("encoded");
+        given(userRepository.save(any())).willReturn(buildSavedUser());
+
+        userService.signup(command);
+
+        ArgumentCaptor<UserHistory> captor = ArgumentCaptor.forClass(UserHistory.class);
+        verify(userHistoryRepository).save(captor.capture());
+        assertThat(captor.getValue().getAction()).isEqualTo(UserAction.SIGNUP);
+    }
+
+    // ── withdraw ────────────────────────────────────────────────────────────
+
+    @Test
+    void withdraw_WITHDRAWAL_이력이_4건_저장된다() {
+        User user = buildSavedUser();
+
+        userService.withdraw(user);
+
+        ArgumentCaptor<UserHistory> captor = ArgumentCaptor.forClass(UserHistory.class);
+        verify(userHistoryRepository, org.mockito.Mockito.times(4)).save(captor.capture());
+
+        List<UserHistory> histories = captor.getAllValues();
+        assertThat(histories).allMatch(h -> h.getAction() == UserAction.WITHDRAWAL);
+        assertThat(histories).extracting(UserHistory::getField)
+            .containsExactly("email", "phone", "nickname", "status");
+    }
+
+    @Test
+    void withdraw_이력에_원본_이메일이_기록된다() {
+        User user = buildSavedUser();
+
+        userService.withdraw(user);
+
+        ArgumentCaptor<UserHistory> captor = ArgumentCaptor.forClass(UserHistory.class);
+        verify(userHistoryRepository, org.mockito.Mockito.times(4)).save(captor.capture());
+
+        UserHistory emailHistory = captor.getAllValues().stream()
+            .filter(h -> "email".equals(h.getField()))
+            .findFirst().orElseThrow();
+        assertThat(emailHistory.getOldValue()).isEqualTo("test@example.com");
+        assertThat(emailHistory.getNewValue()).isEqualTo("withdrawn_1@deleted");
+    }
+
     // ── isEmailAvailable ────────────────────────────────────────────────────
 
     @Test
     void isEmailAvailable_미사용_이메일이면_true() {
-        given(userRepository.existsByEmailAndStatusNot("new@example.com", UserStatus.WITHDRAWN)).willReturn(false);
+        given(userRepository.existsByEmail("new@example.com")).willReturn(false);
         assertThat(userService.isEmailAvailable("new@example.com")).isTrue();
     }
 
     @Test
-    void isEmailAvailable_ACTIVE_회원_이메일이면_false() {
-        given(userRepository.existsByEmailAndStatusNot("used@example.com", UserStatus.WITHDRAWN)).willReturn(true);
+    void isEmailAvailable_사용중_이메일이면_false() {
+        given(userRepository.existsByEmail("used@example.com")).willReturn(true);
         assertThat(userService.isEmailAvailable("used@example.com")).isFalse();
-    }
-
-    @Test
-    void isEmailAvailable_SUSPENDED_회원_이메일이면_false() {
-        given(userRepository.existsByEmailAndStatusNot("suspended@example.com", UserStatus.WITHDRAWN)).willReturn(true);
-        assertThat(userService.isEmailAvailable("suspended@example.com")).isFalse();
-    }
-
-    @Test
-    void isEmailAvailable_WITHDRAWN_회원_이메일이면_true() {
-        // WITHDRAWN 회원의 이메일은 재사용 가능
-        given(userRepository.existsByEmailAndStatusNot("withdrawn@example.com", UserStatus.WITHDRAWN)).willReturn(false);
-        assertThat(userService.isEmailAvailable("withdrawn@example.com")).isTrue();
     }
 
     // ── isPhoneAvailable ────────────────────────────────────────────────────
 
     @Test
     void isPhoneAvailable_미사용_번호면_true() {
-        given(userRepository.existsByPhoneAndStatusNot("01099999999", UserStatus.WITHDRAWN)).willReturn(false);
+        given(userRepository.existsByPhone("01099999999")).willReturn(false);
         assertThat(userService.isPhoneAvailable("01099999999")).isTrue();
     }
 
     @Test
-    void isPhoneAvailable_ACTIVE_회원_번호면_false() {
-        given(userRepository.existsByPhoneAndStatusNot("01012345678", UserStatus.WITHDRAWN)).willReturn(true);
+    void isPhoneAvailable_사용중_번호면_false() {
+        given(userRepository.existsByPhone("01012345678")).willReturn(true);
         assertThat(userService.isPhoneAvailable("01012345678")).isFalse();
-    }
-
-    @Test
-    void isPhoneAvailable_WITHDRAWN_회원_번호면_true() {
-        given(userRepository.existsByPhoneAndStatusNot("01012345678", UserStatus.WITHDRAWN)).willReturn(false);
-        assertThat(userService.isPhoneAvailable("01012345678")).isTrue();
     }
 
     // ── isNicknameAvailable ─────────────────────────────────────────────────
 
     @Test
     void isNicknameAvailable_미사용_닉네임이면_true() {
-        given(userRepository.existsByNicknameIgnoreCaseAndStatusNot("새닉", UserStatus.WITHDRAWN)).willReturn(false);
+        given(userRepository.existsByNicknameIgnoreCase("새닉")).willReturn(false);
         assertThat(userService.isNicknameAvailable("새닉")).isTrue();
     }
 
     @Test
-    void isNicknameAvailable_ACTIVE_회원_닉네임이면_false() {
-        given(userRepository.existsByNicknameIgnoreCaseAndStatusNot("여행자", UserStatus.WITHDRAWN)).willReturn(true);
+    void isNicknameAvailable_사용중_닉네임이면_false() {
+        given(userRepository.existsByNicknameIgnoreCase("여행자")).willReturn(true);
         assertThat(userService.isNicknameAvailable("여행자")).isFalse();
-    }
-
-    @Test
-    void isNicknameAvailable_WITHDRAWN_회원_닉네임이면_true() {
-        given(userRepository.existsByNicknameIgnoreCaseAndStatusNot("여행자", UserStatus.WITHDRAWN)).willReturn(false);
-        assertThat(userService.isNicknameAvailable("여행자")).isTrue();
     }
 
     // ── findUsers ───────────────────────────────────────────────────────────
@@ -350,7 +353,7 @@ class UserServiceTest {
         userService.findUsers(2, 5);
 
         verify(userRepository).findAll(pageableCaptor.capture());
-        assertThat(pageableCaptor.getValue().getPageNumber()).isEqualTo(1); // 2 - 1 = 1 (0-indexed)
+        assertThat(pageableCaptor.getValue().getPageNumber()).isEqualTo(1);
         assertThat(pageableCaptor.getValue().getPageSize()).isEqualTo(5);
     }
 }

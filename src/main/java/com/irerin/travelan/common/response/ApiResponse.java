@@ -1,7 +1,6 @@
 package com.irerin.travelan.common.response;
 
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.springframework.data.domain.Page;
@@ -30,10 +29,6 @@ public class ApiResponse<T> {
 
     public static <T> ApiResponse<T> ok() {
         return new ApiResponse<>(true, null, null, null, null, null);
-    }
-
-    public static <T> ApiResponse<List<T>> ofPage(Page<T> pageResult, int pageNumber) {
-        return new ApiResponse<>(true, pageResult.getContent(), PageMeta.from(pageResult, pageNumber), null, null, null);
     }
 
     public static <T> ApiResponse<T> error(ErrorResponse errorResponse) {

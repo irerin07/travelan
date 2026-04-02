@@ -36,6 +36,7 @@ import org.springframework.http.HttpHeaders;
 
 @WebMvcTest(controllers = AuthController.class)
 @Import(SecurityConfig.class)
+@org.springframework.boot.test.autoconfigure.json.AutoConfigureJson
 class AuthControllerTest {
 
     @Autowired MockMvc mockMvc;
@@ -262,6 +263,36 @@ class AuthControllerTest {
             .andExpect(jsonPath("$.data.available").value(true));
     }
 
+    // ── check-* validation ─────────────────────────────────────────────────
+
+    @Test
+    void checkEmail_빈값이면_400() throws Exception {
+        mockMvc.perform(get("/api/v1/auth/check-email").param("email", ""))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"));
+    }
+
+    @Test
+    void checkEmail_형식오류이면_400() throws Exception {
+        mockMvc.perform(get("/api/v1/auth/check-email").param("email", "invalid"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"));
+    }
+
+    @Test
+    void checkPhone_형식오류이면_400() throws Exception {
+        mockMvc.perform(get("/api/v1/auth/check-phone").param("phone", "12345"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"));
+    }
+
+    @Test
+    void checkNickname_길이미달이면_400() throws Exception {
+        mockMvc.perform(get("/api/v1/auth/check-nickname").param("nickname", "a"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"));
+    }
+
     // ── POST /api/v1/auth/login ──────────────────────────────────────────────
 
     @Test
@@ -281,6 +312,22 @@ class AuthControllerTest {
             .andExpect(jsonPath("$.data.expiresIn").value(3600))
             .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("refreshToken=refresh-token")))
             .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("HttpOnly")));
+    }
+
+    @Test
+    void login_Set_Cookie_Secure_SameSite_Path_검증() throws Exception {
+        given(authService.login(any(LoginCommand.class)))
+            .willReturn(LoginTokens.of("access-token", "refresh-token", 3600L));
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    { "email": "test@example.com", "password": "Password1!" }
+                    """))
+            .andExpect(status().isOk())
+            .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("Secure")))
+            .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("SameSite=Strict")))
+            .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("Path=/api/v1/auth")));
     }
 
     @Test
@@ -307,5 +354,86 @@ class AuthControllerTest {
                     """))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"));
+    }
+
+    // ── POST /api/v1/auth/refresh ───────────────────────────────────────
+
+    @Test
+    void refresh_성공_새_accessToken_반환_및_Cookie_갱신() throws Exception {
+        given(authService.refresh("old-refresh-token"))
+            .willReturn(LoginTokens.of("new-access-token", "new-refresh-token", 3600L));
+
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                .cookie(new jakarta.servlet.http.Cookie("refreshToken", "old-refresh-token")))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.success").value(true))
+            .andExpect(jsonPath("$.data.accessToken").value("new-access-token"))
+            .andExpect(jsonPath("$.data.tokenType").value("Bearer"))
+            .andExpect(jsonPath("$.data.expiresIn").value(3600))
+            .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("refreshToken=new-refresh-token")))
+            .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("HttpOnly")));
+    }
+
+    @Test
+    void refresh_쿠키_없으면_401() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/refresh"))
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.error.code").value("UNAUTHORIZED"));
+    }
+
+    @Test
+    void refresh_Cookie_Secure_SameSite_Path_검증() throws Exception {
+        given(authService.refresh("old-refresh-token"))
+            .willReturn(LoginTokens.of("new-access-token", "new-refresh-token", 3600L));
+
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                .cookie(new jakarta.servlet.http.Cookie("refreshToken", "old-refresh-token")))
+            .andExpect(status().isOk())
+            .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("Secure")))
+            .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("SameSite=Strict")))
+            .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("Path=/api/v1/auth")));
+    }
+
+    @Test
+    void refresh_토큰_재사용_감지_401() throws Exception {
+        willThrow(new AuthException("토큰 재사용이 감지되었습니다"))
+            .given(authService).refresh("revoked-token");
+
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                .cookie(new jakarta.servlet.http.Cookie("refreshToken", "revoked-token")))
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.error.code").value("UNAUTHORIZED"));
+    }
+
+    // ── POST /api/v1/auth/logout ────────────────────────────────────────
+
+    @Test
+    void logout_성공_204_Cookie_삭제() throws Exception {
+        given(jwtProvider.isValid("valid-access-token")).willReturn(true);
+        given(jwtProvider.getUserId("valid-access-token")).willReturn(1L);
+        given(jwtProvider.getRole("valid-access-token")).willReturn(com.irerin.travelan.user.entity.UserRole.USER);
+
+        mockMvc.perform(post("/api/v1/auth/logout")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer valid-access-token"))
+            .andExpect(status().isNoContent())
+            .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("refreshToken=")))
+            .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("Max-Age=0")));
+    }
+
+    @Test
+    void logout_토큰없이_요청_401() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/logout"))
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.error.code").value("UNAUTHORIZED"));
+    }
+
+    @Test
+    void logout_유효하지않은_토큰_401() throws Exception {
+        given(jwtProvider.isValid("invalid-token")).willReturn(false);
+
+        mockMvc.perform(post("/api/v1/auth/logout")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer invalid-token"))
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.error.code").value("UNAUTHORIZED"));
     }
 }

@@ -222,36 +222,36 @@
 - [x] `V6__add_revoked_to_refresh_token.sql` 마이그레이션 추가
 
 ### 4-1. 토큰 갱신 Service
-- [ ] `AuthService`에 `refresh()` 메서드 추가 (`@Transactional` 필수)
-- [ ] Cookie에서 Refresh Token 추출
-- [ ] DB에서 Refresh Token 조회 → 없으면 `401`
-- [ ] `isUsable()` 확인 → 만료 또는 revoked이면 `401`
-- [ ] 새 Access Token 생성
-- [ ] Refresh Token Rotation: `stored.revoke()` + 새 Refresh Token 저장 (원자적 처리)
-- [ ] 재사용 감지 (이미 `revoked`된 토큰으로 요청 시) → 해당 회원 전체 토큰 revoke + `401`
+- [x] `AuthService`에 `refresh()` 메서드 추가 (`@Transactional` 필수)
+- [x] Cookie에서 Refresh Token 추출
+- [x] DB에서 Refresh Token 조회 → 없으면 `401`
+- [x] `isUsable()` 확인 → 만료 또는 revoked이면 `401`
+- [x] 새 Access Token 생성
+- [x] Refresh Token Rotation: `stored.revoke()` + 새 Refresh Token 저장 (원자적 처리)
+- [x] 재사용 감지 (이미 `revoked`된 토큰으로 요청 시) → 해당 회원 전체 토큰 revoke + `401`
 
 ### 4-2. 토큰 갱신 Controller
-- [ ] `POST /api/v1/auth/refresh` 구현
-- [ ] 새 Access Token → 응답 body 반환
-- [ ] 새 Refresh Token → Cookie 갱신
+- [x] `POST /api/v1/auth/refresh` 구현
+- [x] 새 Access Token → 응답 body 반환
+- [x] 새 Refresh Token → Cookie 갱신
 
 ### 4-3. 로그아웃 Service
-- [ ] `AuthService`에 `logout()` 메서드 추가
-- [ ] Access Token에서 `userId` 파싱
-- [ ] DB에서 해당 회원의 Refresh Token 전체 삭제
+- [x] `AuthService`에 `logout()` 메서드 추가
+- [x] Access Token에서 `userId` 파싱
+- [x] DB에서 해당 회원의 Refresh Token 전체 삭제
 
 ### 4-4. 로그아웃 Controller
-- [ ] `POST /api/v1/auth/logout` 구현
-- [ ] `Set-Cookie` 헤더로 Refresh Token Cookie 만료 처리 (`Max-Age=0`)
-- [ ] `204 No Content` 반환
+- [x] `POST /api/v1/auth/logout` 구현
+- [x] `Set-Cookie` 헤더로 Refresh Token Cookie 만료 처리 (`Max-Age=0`)
+- [x] `204 No Content` 반환
 
 ### 4-5. Phase 4 완료 기준 검증
-- [ ] 유효한 Refresh Token → 새 Access Token 반환 확인
-- [ ] Rotation으로 새 Refresh Token Cookie 갱신 확인
-- [ ] 만료된 Refresh Token → `401` 확인
-- [ ] 로그아웃 → `204 No Content` + Cookie 삭제 확인
-- [ ] 로그아웃 후 기존 Refresh Token 재사용 → `401` 확인
-- [ ] 이미 사용된 Refresh Token 재사용 시 전체 세션 무효화 확인
+- [x] 유효한 Refresh Token → 새 Access Token 반환 확인
+- [x] Rotation으로 새 Refresh Token Cookie 갱신 확인
+- [x] 만료된 Refresh Token → `401` 확인
+- [x] 로그아웃 → `204 No Content` + Cookie 삭제 확인
+- [x] 로그아웃 후 기존 Refresh Token 재사용 → `401` 확인
+- [x] 이미 사용된 Refresh Token 재사용 시 전체 세션 무효화 확인
 
 ---
 

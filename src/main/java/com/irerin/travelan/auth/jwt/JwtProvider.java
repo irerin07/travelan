@@ -13,13 +13,17 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import lombok.RequiredArgsConstructor;
 
 @Component
-@RequiredArgsConstructor
 public class JwtProvider {
 
     private final JwtProperties jwtProperties;
+    private final SecretKey secretKey;
+
+    public JwtProvider(JwtProperties jwtProperties) {
+        this.jwtProperties = jwtProperties;
+        this.secretKey = Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8));
+    }
 
     public String generateAccessToken(Long userId, UserRole role) {
         return buildToken(userId, role, jwtProperties.getAccessTokenExpiry());
@@ -53,20 +57,15 @@ public class JwtProvider {
             .claim("role", role.name())
             .issuedAt(now)
             .expiration(new Date(now.getTime() + expirySeconds * 1000))
-            .signWith(getSecretKey())
+            .signWith(secretKey)
             .compact();
     }
 
     private Claims getClaims(String token) {
         return Jwts.parser()
-            .verifyWith(getSecretKey())
+            .verifyWith(secretKey)
             .build()
             .parseSignedClaims(token)
             .getPayload();
     }
-
-    private SecretKey getSecretKey() {
-        return Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8));
-    }
-
 }

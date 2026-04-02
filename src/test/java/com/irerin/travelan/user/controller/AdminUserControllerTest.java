@@ -32,6 +32,7 @@ import com.irerin.travelan.user.service.UserService;
 
 @WebMvcTest(controllers = AdminUserController.class)
 @Import(SecurityConfig.class)
+@org.springframework.boot.test.autoconfigure.json.AutoConfigureJson
 class AdminUserControllerTest {
 
     @Autowired MockMvc mockMvc;

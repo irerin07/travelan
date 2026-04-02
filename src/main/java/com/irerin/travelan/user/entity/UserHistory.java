@@ -1,16 +1,15 @@
-package com.irerin.travelan.auth.entity;
+package com.irerin.travelan.user.entity;
 
-import java.time.Clock;
 import java.time.LocalDateTime;
 
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import com.irerin.travelan.user.entity.User;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -24,11 +23,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "refresh_token")
+@Table(name = "user_history")
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class RefreshToken {
+public class UserHistory {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,44 +37,40 @@ public class RefreshToken {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(nullable = false, unique = true, length = 512)
-    private String token;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+    private UserAction action;
 
-    @Column(nullable = false)
-    private LocalDateTime expiresAt;
+    @Column(length = 50)
+    private String field;
 
-    @Column(nullable = false)
-    private boolean revoked = false;
+    @Column(length = 500)
+    private String oldValue;
+
+    @Column(length = 500)
+    private String newValue;
 
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @Builder
-    private RefreshToken(User user, String token, LocalDateTime expiresAt) {
+    private UserHistory(User user, UserAction action, String field, String oldValue, String newValue) {
         this.user = user;
-        this.token = token;
-        this.expiresAt = expiresAt;
+        this.action = action;
+        this.field = field;
+        this.oldValue = oldValue;
+        this.newValue = newValue;
     }
 
-    public static RefreshToken of(User user, String token, LocalDateTime expiresAt) {
-        return RefreshToken.builder()
+    public static UserHistory of(User user, UserAction action, String field, String oldValue, String newValue) {
+        return UserHistory.builder()
             .user(user)
-            .token(token)
-            .expiresAt(expiresAt)
+            .action(action)
+            .field(field)
+            .oldValue(oldValue)
+            .newValue(newValue)
             .build();
-    }
-
-    public boolean isExpired(Clock clock) {
-        return LocalDateTime.now(clock).isAfter(this.expiresAt);
-    }
-
-    public void revoke() {
-        this.revoked = true;
-    }
-
-    public boolean isUsable(Clock clock) {
-        return !revoked && !isExpired(clock);
     }
 
 }

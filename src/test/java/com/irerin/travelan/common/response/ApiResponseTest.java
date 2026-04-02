@@ -24,18 +24,6 @@ class ApiResponseTest {
     }
 
     @Test
-    void ofPage_페이징응답() {
-        PageImpl<String> page = new PageImpl<>(List.of("a", "b"), PageRequest.of(0, 20), 2);
-
-        ApiResponse<List<String>> response = ApiResponse.ofPage(page, 1);
-
-        assertThat(response.isSuccess()).isTrue();
-        assertThat(response.getData()).containsExactly("a", "b");
-        assertThat(response.getPage().getPage()).isEqualTo(1);
-        assertThat(response.getSearch()).isNull();
-    }
-
-    @Test
     void error_에러응답() {
         ErrorResponse error = ErrorResponse.of("NOT_FOUND", "리소스 없음");
 

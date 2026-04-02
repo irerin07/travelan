@@ -1,5 +1,6 @@
 package com.irerin.travelan.user.service;
 
+import java.time.Clock;
 import java.util.List;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -14,7 +15,9 @@ import com.irerin.travelan.auth.dto.SignupResponse;
 import com.irerin.travelan.common.exception.DuplicateException;
 import com.irerin.travelan.user.dto.SignupCommand;
 import com.irerin.travelan.user.entity.User;
-import com.irerin.travelan.user.entity.UserStatus;
+import com.irerin.travelan.user.entity.UserAction;
+import com.irerin.travelan.user.entity.UserHistory;
+import com.irerin.travelan.user.repository.UserHistoryRepository;
 import com.irerin.travelan.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -24,25 +27,23 @@ import lombok.RequiredArgsConstructor;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final UserHistoryRepository userHistoryRepository;
     private final PasswordEncoder passwordEncoder;
+    private final Clock clock;
 
     @Transactional
     public SignupResponse signup(SignupCommand request) {
-        if (userRepository.existsByEmailAndStatusNot(request.getEmail(), UserStatus.WITHDRAWN)) {
+        if (userRepository.existsByEmail(request.getEmail())) {
             throw new DuplicateException("이미 사용 중인 이메일입니다");
         }
 
-        if (userRepository.existsByPhoneAndStatusNot(request.getPhone(), UserStatus.WITHDRAWN)) {
+        if (userRepository.existsByPhone(request.getPhone())) {
             throw new DuplicateException("이미 사용 중인 휴대폰 번호입니다");
         }
 
-        if (userRepository.existsByNicknameIgnoreCaseAndStatusNot(request.getNickname(), UserStatus.WITHDRAWN)) {
+        if (userRepository.existsByNicknameIgnoreCase(request.getNickname())) {
             throw new DuplicateException("이미 사용 중인 닉네임입니다");
         }
-
-        userRepository.findByEmail(request.getEmail()).ifPresent(userRepository::delete);
-        userRepository.findByPhone(request.getPhone()).ifPresent(userRepository::delete);
-        userRepository.findByNicknameIgnoreCase(request.getNickname()).ifPresent(userRepository::delete);
 
         User user = User.builder()
             .email(request.getEmail())
@@ -54,25 +55,43 @@ public class UserService {
 
         List<String> regions = request.getInterestRegions();
         if (regions != null) {
-            regions.forEach(user::addInterestRegion);
+            regions.stream().distinct().forEach(user::addInterestRegion);
         }
 
-        return SignupResponse.from(userRepository.save(user));
+        User savedUser = userRepository.save(user);
+        userHistoryRepository.save(UserHistory.of(savedUser, UserAction.SIGNUP, null, null, null));
+
+        return SignupResponse.from(savedUser);
+    }
+
+    @Transactional
+    public void withdraw(User user) {
+        String oldEmail = user.getEmail();
+        String oldPhone = user.getPhone();
+        String oldNickname = user.getNickname();
+        String oldStatus = user.getStatus().name();
+
+        user.withdraw(clock);
+
+        userHistoryRepository.save(UserHistory.of(user, UserAction.WITHDRAWAL, "email", oldEmail, user.getEmail()));
+        userHistoryRepository.save(UserHistory.of(user, UserAction.WITHDRAWAL, "phone", oldPhone, user.getPhone()));
+        userHistoryRepository.save(UserHistory.of(user, UserAction.WITHDRAWAL, "nickname", oldNickname, user.getNickname()));
+        userHistoryRepository.save(UserHistory.of(user, UserAction.WITHDRAWAL, "status", oldStatus, user.getStatus().name()));
     }
 
     @Transactional(readOnly = true)
     public boolean isEmailAvailable(String email) {
-        return !userRepository.existsByEmailAndStatusNot(email, UserStatus.WITHDRAWN);
+        return !userRepository.existsByEmail(email);
     }
 
     @Transactional(readOnly = true)
     public boolean isPhoneAvailable(String phone) {
-        return !userRepository.existsByPhoneAndStatusNot(phone, UserStatus.WITHDRAWN);
+        return !userRepository.existsByPhone(phone);
     }
 
     @Transactional(readOnly = true)
     public boolean isNicknameAvailable(String nickname) {
-        return !userRepository.existsByNicknameIgnoreCaseAndStatusNot(nickname, UserStatus.WITHDRAWN);
+        return !userRepository.existsByNicknameIgnoreCase(nickname);
     }
 
     @Transactional(readOnly = true)

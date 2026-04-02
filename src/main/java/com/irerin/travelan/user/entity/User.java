@@ -1,5 +1,6 @@
 package com.irerin.travelan.user.entity;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -58,6 +59,12 @@ public class User {
     @Column(nullable = false, length = 10)
     private UserRole role = UserRole.USER;
 
+    @Column
+    private String originalEmail;
+
+    @Column
+    private LocalDateTime withdrawnAt;
+
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -81,5 +88,14 @@ public class User {
 
     public void addInterestRegion(String region) {
         this.interestRegions.add(UserInterestRegion.of(this, region));
+    }
+
+    public void withdraw(Clock clock) {
+        this.originalEmail = this.email;
+        this.email = "withdrawn_" + this.id + "@deleted";
+        this.phone = "del_" + this.id;
+        this.nickname = "탈퇴" + this.id;
+        this.status = UserStatus.WITHDRAWN;
+        this.withdrawnAt = LocalDateTime.now(clock);
     }
 }
