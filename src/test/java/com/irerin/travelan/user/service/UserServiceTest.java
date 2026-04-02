@@ -221,34 +221,15 @@ class UserServiceTest {
     // ── withdraw ────────────────────────────────────────────────────────────
 
     @Test
-    void withdraw_WITHDRAWAL_이력이_4건_저장된다() {
+    void withdraw_WITHDRAWAL_이력이_1건_저장된다() {
         User user = buildSavedUser();
 
         userService.withdraw(user);
 
         ArgumentCaptor<UserHistory> captor = ArgumentCaptor.forClass(UserHistory.class);
-        verify(userHistoryRepository, org.mockito.Mockito.times(4)).save(captor.capture());
+        verify(userHistoryRepository).save(captor.capture());
 
-        List<UserHistory> histories = captor.getAllValues();
-        assertThat(histories).allMatch(h -> h.getAction() == UserAction.WITHDRAWAL);
-        assertThat(histories).extracting(UserHistory::getField)
-            .containsExactly("email", "phone", "nickname", "status");
-    }
-
-    @Test
-    void withdraw_이력에_원본_이메일이_기록된다() {
-        User user = buildSavedUser();
-
-        userService.withdraw(user);
-
-        ArgumentCaptor<UserHistory> captor = ArgumentCaptor.forClass(UserHistory.class);
-        verify(userHistoryRepository, org.mockito.Mockito.times(4)).save(captor.capture());
-
-        UserHistory emailHistory = captor.getAllValues().stream()
-            .filter(h -> "email".equals(h.getField()))
-            .findFirst().orElseThrow();
-        assertThat(emailHistory.getOldValue()).isEqualTo("test@example.com");
-        assertThat(emailHistory.getNewValue()).isEqualTo("withdrawn_1@deleted");
+        assertThat(captor.getValue().getAction()).isEqualTo(UserAction.WITHDRAWAL);
     }
 
     // ── isEmailAvailable ────────────────────────────────────────────────────

@@ -40,3 +40,8 @@
 - 엔티티: `@NoArgsConstructor(access = PROTECTED)` + `@Builder` private 생성자 + 정적 팩토리 메서드 `of(...)` 사용
 - DTO / 응답 객체: `@AllArgsConstructor(access = PRIVATE)` + 정적 팩토리 메서드 `from(...)` 또는 `of(...)` 사용
 - 예외 (`throw new ...`)·서드파티 클래스·컬렉션 필드 초기화(`new ArrayList<>()`)는 예외적으로 허용
+
+### 일급 컬렉션
+- JPA 엔티티의 `@OneToMany` 컬렉션 필드에는 일급 컬렉션(`@Embeddable` 래퍼)을 적용하지 말 것
+  - Hibernate 프록시, 지연 로딩, 변경 감지와 충돌 위험이 있음
+- 엔티티가 아닌 순수 도메인 객체나 VO에서만 적용을 검토할 것

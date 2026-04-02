@@ -59,24 +59,16 @@ public class UserService {
         }
 
         User savedUser = userRepository.save(user);
-        userHistoryRepository.save(UserHistory.of(savedUser, UserAction.SIGNUP, null, null, null));
+        userHistoryRepository.save(UserHistory.ofEvent(savedUser, UserAction.SIGNUP));
 
         return SignupResponse.from(savedUser);
     }
 
     @Transactional
     public void withdraw(User user) {
-        String oldEmail = user.getEmail();
-        String oldPhone = user.getPhone();
-        String oldNickname = user.getNickname();
-        String oldStatus = user.getStatus().name();
-
         user.withdraw(clock);
 
-        userHistoryRepository.save(UserHistory.of(user, UserAction.WITHDRAWAL, "email", oldEmail, user.getEmail()));
-        userHistoryRepository.save(UserHistory.of(user, UserAction.WITHDRAWAL, "phone", oldPhone, user.getPhone()));
-        userHistoryRepository.save(UserHistory.of(user, UserAction.WITHDRAWAL, "nickname", oldNickname, user.getNickname()));
-        userHistoryRepository.save(UserHistory.of(user, UserAction.WITHDRAWAL, "status", oldStatus, user.getStatus().name()));
+        userHistoryRepository.save(UserHistory.ofEvent(user, UserAction.WITHDRAWAL));
     }
 
     @Transactional(readOnly = true)

@@ -73,4 +73,11 @@ public class UserHistory {
             .build();
     }
 
+    public static UserHistory ofEvent(User user, UserAction action) {
+        return UserHistory.builder()
+            .user(user)
+            .action(action)
+            .build();
+    }
+
 }
