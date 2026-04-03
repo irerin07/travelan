@@ -65,6 +65,28 @@ class UserTest {
     }
 
     @Test
+    void withdraw_대용량_ID에서_닉네임이_10자_이하여야_한다() {
+        User user = buildUser();
+        ReflectionTestUtils.setField(user, "id", 999_999_999L);
+
+        user.withdraw(FIXED_CLOCK);
+
+        assertThat(user.getNickname().length()).isLessThanOrEqualTo(10);
+    }
+
+    @Test
+    void of_정적팩토리로_User_생성() {
+        User user = User.of("user@example.com", "encodedPw", "홍길동", "01011112222", "트레블러");
+
+        assertThat(user.getEmail()).isEqualTo("user@example.com");
+        assertThat(user.getPassword()).isEqualTo("encodedPw");
+        assertThat(user.getName()).isEqualTo("홍길동");
+        assertThat(user.getPhone()).isEqualTo("01011112222");
+        assertThat(user.getNickname()).isEqualTo("트레블러");
+        assertThat(user.getStatus()).isEqualTo(UserStatus.ACTIVE);
+    }
+
+    @Test
     void withdraw_원본이메일이_보존된다() {
         User user = buildUser();
 

@@ -13,16 +13,30 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 
 @Component
 public class JwtProvider {
 
     private final JwtProperties jwtProperties;
-    private final SecretKey secretKey;
+    private SecretKey secretKey;
 
     public JwtProvider(JwtProperties jwtProperties) {
         this.jwtProperties = jwtProperties;
-        this.secretKey = Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8));
+        if (jwtProperties.getSecret() != null && jwtProperties.getSecret().length() >= 32) {
+            this.secretKey = Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8));
+        }
+    }
+
+    @PostConstruct
+    public void validateSecret() {
+        String secret = jwtProperties.getSecret();
+        if (secret == null || secret.length() < 32) {
+            throw new IllegalStateException(
+                "JWT_SECRET must be set and at least 32 characters long. " +
+                "Set the JWT_SECRET environment variable."
+            );
+        }
     }
 
     public String generateAccessToken(Long userId, UserRole role) {

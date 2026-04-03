@@ -45,13 +45,13 @@ public class UserService {
             throw new DuplicateException("이미 사용 중인 닉네임입니다");
         }
 
-        User user = User.builder()
-            .email(request.getEmail())
-            .password(passwordEncoder.encode(request.getPassword()))
-            .name(request.getName())
-            .phone(request.getPhone())
-            .nickname(request.getNickname())
-            .build();
+        User user = User.of(
+            request.getEmail(),
+            passwordEncoder.encode(request.getPassword()),
+            request.getName(),
+            request.getPhone(),
+            request.getNickname()
+        );
 
         List<String> regions = request.getInterestRegions();
         if (regions != null) {

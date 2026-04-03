@@ -212,19 +212,16 @@ class AuthServiceTest {
 
     @Test
     void logout_성공_해당유저_전체토큰_revoke() {
-        given(userRepository.findById(1L)).willReturn(Optional.of(activeUser));
-
         authService.logout(1L);
 
-        verify(refreshTokenRepository).revokeAllByUser(activeUser);
+        verify(refreshTokenRepository).revokeAllByUserId(1L);
     }
 
     @Test
-    void logout_존재하지_않는_유저_AuthException() {
-        given(userRepository.findById(999L)).willReturn(Optional.empty());
+    void logout_존재하지_않는_유저도_revokeAllByUserId_호출() {
+        authService.logout(999L);
 
-        assertThatThrownBy(() -> authService.logout(999L))
-            .isInstanceOf(AuthException.class);
+        verify(refreshTokenRepository).revokeAllByUserId(999L);
     }
 
     private RefreshToken createRefreshToken(User user, String token, boolean revoked) {

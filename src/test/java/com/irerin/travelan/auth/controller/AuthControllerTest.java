@@ -293,6 +293,27 @@ class AuthControllerTest {
             .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"));
     }
 
+    @Test
+    void checkEmail_형식오류시_field가_email() throws Exception {
+        mockMvc.perform(get("/api/v1/auth/check-email").param("email", "invalid"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.error.errors[0].field").value("email"));
+    }
+
+    @Test
+    void checkPhone_형식오류시_field가_phone() throws Exception {
+        mockMvc.perform(get("/api/v1/auth/check-phone").param("phone", "12345"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.error.errors[0].field").value("phone"));
+    }
+
+    @Test
+    void checkNickname_길이미달시_field가_nickname() throws Exception {
+        mockMvc.perform(get("/api/v1/auth/check-nickname").param("nickname", "a"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.error.errors[0].field").value("nickname"));
+    }
+
     // ── POST /api/v1/auth/login ──────────────────────────────────────────────
 
     @Test

@@ -1,6 +1,7 @@
 package com.irerin.travelan.auth.jwt;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -81,5 +82,43 @@ class JwtProviderTest {
         String token = otherProvider.generateAccessToken(1L, UserRole.USER);
 
         assertThat(jwtProvider.isValid(token)).isFalse();
+    }
+
+    @Test
+    void validateSecret_시크릿_null이면_IllegalStateException() {
+        JwtProperties props = new JwtProperties();
+        props.setSecret(null);
+        props.setAccessTokenExpiry(3600L);
+        props.setRefreshTokenExpiry(2592000L);
+        JwtProvider provider = new JwtProvider(props);
+
+        assertThatThrownBy(provider::validateSecret)
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("JWT_SECRET");
+    }
+
+    @Test
+    void validateSecret_시크릿_32자_미만이면_IllegalStateException() {
+        JwtProperties props = new JwtProperties();
+        props.setSecret("short-secret");
+        props.setAccessTokenExpiry(3600L);
+        props.setRefreshTokenExpiry(2592000L);
+        JwtProvider provider = new JwtProvider(props);
+
+        assertThatThrownBy(provider::validateSecret)
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("JWT_SECRET");
+    }
+
+    @Test
+    void validateSecret_시크릿_32자_이상이면_정상() {
+        JwtProperties props = new JwtProperties();
+        props.setSecret("travelan-test-secret-key-must-be-at-least-256-bits!!");
+        props.setAccessTokenExpiry(3600L);
+        props.setRefreshTokenExpiry(2592000L);
+        JwtProvider provider = new JwtProvider(props);
+
+        // should not throw
+        provider.validateSecret();
     }
 }

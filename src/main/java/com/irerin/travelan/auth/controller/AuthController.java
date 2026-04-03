@@ -23,13 +23,11 @@ import com.irerin.travelan.auth.dto.LoginTokens;
 import com.irerin.travelan.auth.dto.SignupRequest;
 import com.irerin.travelan.auth.dto.SignupResponse;
 import com.irerin.travelan.auth.jwt.JwtProperties;
-import com.irerin.travelan.auth.jwt.JwtProvider;
 import com.irerin.travelan.auth.service.AuthService;
 import com.irerin.travelan.common.response.ApiResponse;
 import com.irerin.travelan.user.dto.SignupCommand;
 import com.irerin.travelan.user.service.UserService;
 
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
@@ -37,6 +35,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 
 @RestController
@@ -48,7 +47,6 @@ public class AuthController {
     private final UserService userService;
     private final AuthService authService;
     private final JwtProperties jwtProperties;
-    private final JwtProvider jwtProvider;
 
     @PostMapping("/signup")
     public ResponseEntity<ApiResponse<SignupResponse>> signup(@RequestBody @Valid SignupRequest request) {
@@ -105,18 +103,8 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(HttpServletRequest request, HttpServletResponse httpResponse) {
-        String bearer = request.getHeader(HttpHeaders.AUTHORIZATION);
-        if (bearer == null || !bearer.startsWith("Bearer ")) {
-            throw new AuthException("인증 토큰이 필요합니다");
-        }
-
-        String token = bearer.substring(7);
-        if (!jwtProvider.isValid(token)) {
-            throw new AuthException("유효하지 않은 토큰입니다");
-        }
-
-        Long userId = jwtProvider.getUserId(token);
+    public ResponseEntity<Void> logout(HttpServletResponse httpResponse) {
+        Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         authService.logout(userId);
 
         ResponseCookie cookie = ResponseCookie.from("refreshToken", "")

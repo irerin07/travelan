@@ -86,6 +86,16 @@ public class User {
         this.status = UserStatus.ACTIVE;
     }
 
+    public static User of(String email, String password, String name, String phone, String nickname) {
+        return User.builder()
+            .email(email)
+            .password(password)
+            .name(name)
+            .phone(phone)
+            .nickname(nickname)
+            .build();
+    }
+
     public void addInterestRegion(String region) {
         this.interestRegions.add(UserInterestRegion.of(this, region));
     }
@@ -94,8 +104,9 @@ public class User {
         this.originalEmail = this.email;
         this.email = "withdrawn_" + this.id + "@deleted";
         this.phone = "del_" + this.id;
-        this.nickname = "탈퇴" + this.id;
+        this.nickname = "탈퇴" + (this.id % 99_999_999L);
         this.status = UserStatus.WITHDRAWN;
         this.withdrawnAt = LocalDateTime.now(clock);
     }
+
 }

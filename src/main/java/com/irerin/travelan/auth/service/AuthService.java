@@ -86,10 +86,7 @@ public class AuthService {
 
     @Transactional
     public void logout(Long userId) {
-        User user = userRepository.findById(userId)
-            .orElseThrow(() -> new AuthException("존재하지 않는 회원입니다"));
-
-        refreshTokenRepository.revokeAllByUser(user);
+        refreshTokenRepository.revokeAllByUserId(userId);
     }
 
 }
