@@ -31,7 +31,9 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
 
+import com.irerin.travelan.auth.repository.RefreshTokenRepository;
 import com.irerin.travelan.common.exception.DuplicateException;
+import com.irerin.travelan.common.exception.NotFoundException;
 import com.irerin.travelan.user.dto.SignupCommand;
 import com.irerin.travelan.user.entity.User;
 import com.irerin.travelan.user.entity.UserAction;
@@ -46,6 +48,7 @@ class UserServiceTest {
 
     @Mock UserRepository userRepository;
     @Mock UserHistoryRepository userHistoryRepository;
+    @Mock RefreshTokenRepository refreshTokenRepository;
     @Mock PasswordEncoder passwordEncoder;
 
     private UserService userService;
@@ -55,7 +58,7 @@ class UserServiceTest {
     @BeforeEach
     void setUp() {
         Clock clock = Clock.fixed(Instant.parse("2026-04-01T12:00:00Z"), ZoneId.of("Asia/Seoul"));
-        userService = new UserService(userRepository, userHistoryRepository, passwordEncoder, clock);
+        userService = new UserService(userRepository, userHistoryRepository, refreshTokenRepository, passwordEncoder, clock);
         command = SignupCommand.of(
             "test@example.com", "Password1!", "홍길동", "01012345678", "여행자",
             List.of("서울", "부산")
@@ -224,12 +227,60 @@ class UserServiceTest {
     void withdraw_WITHDRAWAL_이력이_1건_저장된다() {
         User user = buildSavedUser();
 
-        userService.withdraw(user);
+        given(userRepository.findById(1L)).willReturn(java.util.Optional.of(user));
+        userService.withdraw(1L);
 
         ArgumentCaptor<UserHistory> captor = ArgumentCaptor.forClass(UserHistory.class);
         verify(userHistoryRepository).save(captor.capture());
 
         assertThat(captor.getValue().getAction()).isEqualTo(UserAction.WITHDRAWAL);
+    }
+
+    @Test
+    void withdraw_정상_탈퇴_status_WITHDRAWN_변경() {
+        User user = buildSavedUser();
+
+        given(userRepository.findById(1L)).willReturn(java.util.Optional.of(user));
+        userService.withdraw(1L);
+
+        assertThat(user.getStatus()).isEqualTo(UserStatus.WITHDRAWN);
+    }
+
+    @Test
+    void withdraw_정상_탈퇴_email_phone_nickname_익명화() {
+        User user = buildSavedUser();
+
+        given(userRepository.findById(1L)).willReturn(java.util.Optional.of(user));
+        userService.withdraw(1L);
+
+        assertThat(user.getEmail()).isEqualTo("withdrawn_1@deleted");
+        assertThat(user.getPhone()).isEqualTo("del_1");
+        assertThat(user.getNickname()).isEqualTo("탈퇴1");
+        assertThat(user.getOriginalEmail()).isEqualTo("test@example.com");
+    }
+
+    @Test
+    void withdraw_정상_탈퇴_RefreshToken_revoke_호출() {
+        User user = buildSavedUser();
+
+        given(userRepository.findById(1L)).willReturn(java.util.Optional.of(user));
+        userService.withdraw(1L);
+
+        verify(refreshTokenRepository).revokeAllByUserId(1L);
+    }
+
+    @Test
+    void withdraw_이미_탈퇴된_회원_NotFoundException() {
+        User user = buildSavedUser();
+        ReflectionTestUtils.setField(user, "status", UserStatus.WITHDRAWN);
+        given(userRepository.findById(1L)).willReturn(java.util.Optional.of(user));
+
+        assertThatThrownBy(() -> userService.withdraw(1L))
+            .isInstanceOf(NotFoundException.class)
+            .hasMessage("존재하지 않는 회원입니다");
+
+        verify(userHistoryRepository, never()).save(any());
+        verify(refreshTokenRepository, never()).revokeAllByUserId(any());
     }
 
     // ── isEmailAvailable ────────────────────────────────────────────────────

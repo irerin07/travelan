@@ -12,11 +12,14 @@ import org.springframework.data.domain.PageRequest;
 
 import com.irerin.travelan.admin.dto.UserSummaryResponse;
 import com.irerin.travelan.auth.dto.SignupResponse;
+import com.irerin.travelan.auth.repository.RefreshTokenRepository;
 import com.irerin.travelan.common.exception.DuplicateException;
+import com.irerin.travelan.common.exception.NotFoundException;
 import com.irerin.travelan.user.dto.SignupCommand;
 import com.irerin.travelan.user.entity.User;
 import com.irerin.travelan.user.entity.UserAction;
 import com.irerin.travelan.user.entity.UserHistory;
+import com.irerin.travelan.user.entity.UserStatus;
 import com.irerin.travelan.user.repository.UserHistoryRepository;
 import com.irerin.travelan.user.repository.UserRepository;
 
@@ -28,6 +31,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final UserHistoryRepository userHistoryRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final Clock clock;
 
@@ -65,8 +69,17 @@ public class UserService {
     }
 
     @Transactional
-    public void withdraw(User user) {
+    public void withdraw(Long userId) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new NotFoundException("존재하지 않는 회원입니다"));
+
+        if (user.getStatus() == UserStatus.WITHDRAWN) {
+            throw new NotFoundException("존재하지 않는 회원입니다");
+        }
+
         user.withdraw(clock);
+
+        refreshTokenRepository.revokeAllByUserId(user.getId());
 
         userHistoryRepository.save(UserHistory.ofEvent(user, UserAction.WITHDRAWAL));
     }

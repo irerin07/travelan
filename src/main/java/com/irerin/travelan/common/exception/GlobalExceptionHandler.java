@@ -59,6 +59,12 @@ public class GlobalExceptionHandler {
             .body(ApiResponse.error(ErrorResponse.of("VALIDATION_ERROR", "입력값이 올바르지 않습니다", fieldErrors)));
     }
 
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<ApiResponse<?>> handleNotFound(NotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(ApiResponse.error(ErrorResponse.of("NOT_FOUND", ex.getMessage())));
+    }
+
     @ExceptionHandler(DuplicateException.class)
     public ResponseEntity<ApiResponse<?>> handleDuplicate(DuplicateException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
