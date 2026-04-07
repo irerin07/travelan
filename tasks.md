@@ -258,18 +258,18 @@
 ## Phase 5 — 로그인 보안 강화
 
 ### 5-1. DB 마이그레이션
-- [ ] `V7__add_login_fail_columns.sql` 작성 (`login_fail_count INT DEFAULT 0`, `locked_until DATETIME NULL`)
-- [ ] 마이그레이션 적용 확인
-- [ ] `User` 엔티티에 `loginFailCount`, `lockedUntil` 필드 추가
+- [x] `V10__add_login_fail_columns.sql` 작성 (`login_fail_count INT DEFAULT 0`, `locked_until DATETIME NULL`)
+- [x] 마이그레이션 적용 확인
+- [x] `User` 엔티티에 `loginFailCount`, `lockedUntil` 필드 추가
 
 ### 5-2. 계정 잠금 로직
-- [ ] 로그인 시도 시 `lockedUntil` 확인 → 잠금 중이면 `429 Too Many Requests` + `retryAfter` 반환
-- [ ] 비밀번호 불일치 시 `loginFailCount` 증가
-- [ ] `loginFailCount >= 5` 시 `lockedUntil = now() + 30분` 설정
-- [ ] 로그인 성공 시 `loginFailCount = 0`, `lockedUntil = null` 초기화
+- [x] 로그인 시도 시 `lockedUntil` 확인 → 잠금 중이면 `429 Too Many Requests` + `retryAfter` 반환
+- [x] 비밀번호 불일치 시 `loginFailCount` 증가
+- [x] `loginFailCount >= 5` 시 `lockedUntil = now() + 30분` 설정
+- [x] 로그인 성공 시 `loginFailCount = 0`, `lockedUntil = null` 초기화
 
 ### 5-3. Phase 5 완료 기준 검증
-- [ ] 비밀번호 5회 연속 실패 → `429 Too Many Requests` + `retryAfter` 필드 확인
-- [ ] 잠금 상태에서 로그인 시도 → `429` 반환 확인
-- [ ] 30분 경과 후 정상 로그인 가능 확인
-- [ ] 로그인 성공 후 실패 카운트 초기화 확인
+- [x] 비밀번호 5회 연속 실패 → `429 Too Many Requests` + `retryAfter` 필드 확인
+- [x] 잠금 상태에서 로그인 시도 → `429` 반환 확인
+- [x] 30분 경과 후 정상 로그인 가능 확인 (Clock.fixed 기반 단위 테스트로 검증)
+- [x] 로그인 성공 후 실패 카운트 초기화 확인
