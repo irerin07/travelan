@@ -13,6 +13,7 @@ import com.irerin.travelan.auth.entity.RefreshToken;
 import com.irerin.travelan.auth.jwt.JwtProperties;
 import com.irerin.travelan.auth.jwt.JwtProvider;
 import com.irerin.travelan.auth.repository.RefreshTokenRepository;
+import com.irerin.travelan.common.exception.AccountLockedException;
 import com.irerin.travelan.common.exception.AuthException;
 import com.irerin.travelan.user.entity.User;
 import com.irerin.travelan.user.entity.UserStatus;
@@ -39,9 +40,20 @@ public class AuthService {
         if (user.getStatus() != UserStatus.ACTIVE) {
             throw new AuthException("이메일 또는 비밀번호가 올바르지 않습니다");
         }
+
+        if (user.isLocked(clock)) {
+            throw new AccountLockedException(user.getLockedUntil());
+        }
+
         if (!passwordEncoder.matches(command.getPassword(), user.getPassword())) {
+            user.recordLoginFailure(clock);
+            if (user.isLocked(clock)) {
+                throw new AccountLockedException(user.getLockedUntil());
+            }
             throw new AuthException("이메일 또는 비밀번호가 올바르지 않습니다");
         }
+
+        user.resetLoginFailure();
 
         refreshTokenRepository.revokeAllByUser(user);
 

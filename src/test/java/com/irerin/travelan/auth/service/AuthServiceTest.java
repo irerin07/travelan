@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Optional;
 
@@ -27,6 +28,7 @@ import com.irerin.travelan.auth.dto.LoginTokens;
 import com.irerin.travelan.auth.jwt.JwtProperties;
 import com.irerin.travelan.auth.jwt.JwtProvider;
 import com.irerin.travelan.auth.repository.RefreshTokenRepository;
+import com.irerin.travelan.common.exception.AccountLockedException;
 import com.irerin.travelan.common.exception.AuthException;
 import com.irerin.travelan.user.entity.User;
 import com.irerin.travelan.user.entity.UserRole;
@@ -143,6 +145,42 @@ class AuthServiceTest {
         authService.login(loginCommand("test@example.com", "password"));
 
         verify(refreshTokenRepository).revokeAllByUser(activeUser);
+    }
+
+    @Test
+    void login_잠금상태_AccountLockedException() {
+        LocalDateTime futureLockedUntil = LocalDateTime.of(2026, 4, 1, 12, 30);
+        ReflectionTestUtils.setField(activeUser, "lockedUntil", futureLockedUntil);
+        ReflectionTestUtils.setField(activeUser, "loginFailCount", 5);
+        given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(activeUser));
+
+        assertThatThrownBy(() -> authService.login(loginCommand("test@example.com", "password")))
+            .isInstanceOf(AccountLockedException.class);
+    }
+
+    @Test
+    void login_비밀번호_5회실패시_잠금() {
+        ReflectionTestUtils.setField(activeUser, "loginFailCount", 4); // 이미 4회 실패
+        given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(activeUser));
+        given(passwordEncoder.matches("wrongPassword", "encodedPassword")).willReturn(false);
+
+        assertThatThrownBy(() -> authService.login(loginCommand("test@example.com", "wrongPassword")))
+            .isInstanceOf(AccountLockedException.class);
+    }
+
+    @Test
+    void login_성공시_실패카운트_초기화() {
+        ReflectionTestUtils.setField(activeUser, "loginFailCount", 3);
+        given(userRepository.findByEmail("test@example.com")).willReturn(Optional.of(activeUser));
+        given(passwordEncoder.matches("password", "encodedPassword")).willReturn(true);
+        given(jwtProvider.generateAccessToken(1L, UserRole.USER)).willReturn("access-token");
+        given(jwtProvider.generateRefreshToken(1L, UserRole.USER)).willReturn("refresh-token");
+        given(jwtProperties.getRefreshTokenExpiry()).willReturn(2592000L);
+        given(jwtProperties.getAccessTokenExpiry()).willReturn(3600L);
+
+        authService.login(loginCommand("test@example.com", "password"));
+
+        assertThat(activeUser.getLoginFailCount()).isEqualTo(0);
     }
 
     // ── refresh ──────────────────────────────────────────────────────────

@@ -72,6 +72,17 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void handleAccountLocked_429_반환() {
+        var ex = new AccountLockedException(java.time.LocalDateTime.of(2026, 4, 1, 12, 30));
+
+        ResponseEntity<ApiResponse<?>> response = handler.handleAccountLocked(ex);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
+        assertThat(response.getBody().getError().getCode()).isEqualTo("ACCOUNT_LOCKED");
+        assertThat(response.getBody().getError().getErrors().get(0).getField()).isEqualTo("retryAfter");
+    }
+
+    @Test
     void handleAuth_401_반환() {
         ResponseEntity<ApiResponse<?>> response = handler.handleAuth(
             new AuthException("인증 실패")

@@ -65,6 +65,12 @@ public class User {
     @Column
     private LocalDateTime withdrawnAt;
 
+    @Column(nullable = false)
+    private int loginFailCount = 0;
+
+    @Column
+    private LocalDateTime lockedUntil;
+
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -107,6 +113,22 @@ public class User {
         this.nickname = "탈퇴" + (this.id % 99_999_999L);
         this.status = UserStatus.WITHDRAWN;
         this.withdrawnAt = LocalDateTime.now(clock);
+    }
+
+    public boolean isLocked(Clock clock) {
+        return lockedUntil != null && LocalDateTime.now(clock).isBefore(lockedUntil);
+    }
+
+    public void recordLoginFailure(Clock clock) {
+        this.loginFailCount++;
+        if (this.loginFailCount >= 5) {
+            this.lockedUntil = LocalDateTime.now(clock).plusMinutes(30);
+        }
+    }
+
+    public void resetLoginFailure() {
+        this.loginFailCount = 0;
+        this.lockedUntil = null;
     }
 
 }

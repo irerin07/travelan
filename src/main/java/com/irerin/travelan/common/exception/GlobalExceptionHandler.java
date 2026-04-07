@@ -65,6 +65,13 @@ public class GlobalExceptionHandler {
             .body(ApiResponse.error(ErrorResponse.of("DUPLICATE", ex.getMessage())));
     }
 
+    @ExceptionHandler(AccountLockedException.class)
+    public ResponseEntity<ApiResponse<?>> handleAccountLocked(AccountLockedException ex) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+            .body(ApiResponse.error(ErrorResponse.of("ACCOUNT_LOCKED", ex.getMessage(),
+                List.of(ErrorResponse.FieldError.of("retryAfter", ex.getLockedUntil().toString())))));
+    }
+
     @ExceptionHandler(AuthException.class)
     public ResponseEntity<ApiResponse<?>> handleAuth(AuthException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)

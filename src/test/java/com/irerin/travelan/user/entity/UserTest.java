@@ -10,6 +10,7 @@ import java.time.ZoneId;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
+
 class UserTest {
 
     private static final Clock FIXED_CLOCK = Clock.fixed(
@@ -102,5 +103,47 @@ class UserTest {
         user.withdraw(FIXED_CLOCK);
 
         assertThat(user.getWithdrawnAt()).isEqualTo(LocalDateTime.now(FIXED_CLOCK));
+    }
+
+    @Test
+    void recordLoginFailure_횟수가_증가한다() {
+        User user = buildUser();
+        user.recordLoginFailure(FIXED_CLOCK);
+        assertThat(user.getLoginFailCount()).isEqualTo(1);
+    }
+
+    @Test
+    void recordLoginFailure_5회시_계정이_잠긴다() {
+        User user = buildUser();
+        for (int i = 0; i < 5; i++) {
+            user.recordLoginFailure(FIXED_CLOCK);
+        }
+        assertThat(user.isLocked(FIXED_CLOCK)).isTrue();
+        assertThat(user.getLockedUntil()).isEqualTo(LocalDateTime.now(FIXED_CLOCK).plusMinutes(30));
+    }
+
+    @Test
+    void resetLoginFailure_카운트와_잠금이_초기화된다() {
+        User user = buildUser();
+        for (int i = 0; i < 5; i++) {
+            user.recordLoginFailure(FIXED_CLOCK);
+        }
+        user.resetLoginFailure();
+        assertThat(user.getLoginFailCount()).isEqualTo(0);
+        assertThat(user.getLockedUntil()).isNull();
+        assertThat(user.isLocked(FIXED_CLOCK)).isFalse();
+    }
+
+    @Test
+    void isLocked_잠금시간_경과후_false() {
+        User user = buildUser();
+        for (int i = 0; i < 5; i++) {
+            user.recordLoginFailure(FIXED_CLOCK);
+        }
+        Clock futureClock = Clock.fixed(
+            FIXED_CLOCK.instant().plusSeconds(31 * 60),
+            FIXED_CLOCK.getZone()
+        );
+        assertThat(user.isLocked(futureClock)).isFalse();
     }
 }

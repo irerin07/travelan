@@ -26,6 +26,7 @@ import com.irerin.travelan.auth.dto.SignupResponse;
 import com.irerin.travelan.auth.jwt.JwtProvider;
 import com.irerin.travelan.auth.service.AuthService;
 import com.irerin.travelan.common.config.SecurityConfig;
+import com.irerin.travelan.common.exception.AccountLockedException;
 import com.irerin.travelan.common.exception.AuthException;
 import com.irerin.travelan.common.exception.DuplicateException;
 import com.irerin.travelan.user.dto.SignupCommand;
@@ -349,6 +350,21 @@ class AuthControllerTest {
             .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("Secure")))
             .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("SameSite=Strict")))
             .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("Path=/api/v1/auth")));
+    }
+
+    @Test
+    void login_계정잠금_429_retryAfter_반환() throws Exception {
+        willThrow(new AccountLockedException(java.time.LocalDateTime.of(2026, 4, 1, 12, 30)))
+            .given(authService).login(any(LoginCommand.class));
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    { "email": "test@example.com", "password": "Password1!" }
+                    """))
+            .andExpect(status().isTooManyRequests())
+            .andExpect(jsonPath("$.error.code").value("ACCOUNT_LOCKED"))
+            .andExpect(jsonPath("$.error.errors[0].field").value("retryAfter"));
     }
 
     @Test
