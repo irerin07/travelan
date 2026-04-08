@@ -110,7 +110,7 @@ public class User {
         this.originalEmail = this.email;
         this.email = "withdrawn_" + this.id + "@deleted";
         this.phone = "del_" + this.id;
-        this.nickname = "탈퇴" + (this.id % 99_999_999L);
+        this.nickname = "탈퇴" + (this.id % 9_999_999L);
         this.status = UserStatus.WITHDRAWN;
         this.withdrawnAt = LocalDateTime.now(clock);
     }

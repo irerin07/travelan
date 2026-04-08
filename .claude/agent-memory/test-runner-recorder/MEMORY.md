@@ -1,0 +1,1 @@
+- [Test infrastructure and known failure](project_test_infrastructure.md) — Gradle/JUnit5 project; TravelanApplicationTests#contextLoads always fails due to missing datasource config in test env

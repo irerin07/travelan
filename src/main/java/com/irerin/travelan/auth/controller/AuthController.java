@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.irerin.travelan.common.exception.AuthException;
 import com.irerin.travelan.auth.dto.AvailableResponse;
 import com.irerin.travelan.auth.dto.LoginCommand;
 import com.irerin.travelan.auth.dto.LoginRequest;
@@ -24,11 +23,12 @@ import com.irerin.travelan.auth.dto.SignupRequest;
 import com.irerin.travelan.auth.dto.SignupResponse;
 import com.irerin.travelan.auth.jwt.JwtProperties;
 import com.irerin.travelan.auth.service.AuthService;
+import com.irerin.travelan.auth.support.AuthCookieFactory;
+import com.irerin.travelan.common.exception.AuthException;
 import com.irerin.travelan.common.response.ApiResponse;
 import com.irerin.travelan.user.dto.SignupCommand;
 import com.irerin.travelan.user.service.UserService;
 
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -47,6 +47,7 @@ public class AuthController {
     private final UserService userService;
     private final AuthService authService;
     private final JwtProperties jwtProperties;
+    private final AuthCookieFactory authCookieFactory;
 
     @PostMapping("/signup")
     public ResponseEntity<ApiResponse<SignupResponse>> signup(@RequestBody @Valid SignupRequest request) {
@@ -56,30 +57,25 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponse>> login(
-        @RequestBody @Valid LoginRequest request,
-        HttpServletResponse httpResponse
+        @RequestBody @Valid LoginRequest request
     ) {
         LoginTokens tokens = authService.login(LoginCommand.from(request));
 
-        ResponseCookie cookie = ResponseCookie.from("refreshToken", tokens.getRefreshToken())
-            .httpOnly(true)
-            .secure(true)
-            .sameSite("Strict")
-            .maxAge(Duration.ofSeconds(jwtProperties.getRefreshTokenExpiry()))
-            .path("/api/v1/auth")
-            .build();
+        ResponseCookie cookie = authCookieFactory.refreshTokenCookie(
+            tokens.getRefreshToken(),
+            Duration.ofSeconds(jwtProperties.getRefreshTokenExpiry())
+        );
 
-        httpResponse.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-
-        return ResponseEntity.ok(ApiResponse.ok(
-            LoginResponse.of(tokens.getAccessToken(), "Bearer", tokens.getAccessTokenExpiry())
-        ));
+        return ResponseEntity.ok()
+            .header(HttpHeaders.SET_COOKIE, cookie.toString())
+            .body(ApiResponse.ok(
+                LoginResponse.of(tokens.getAccessToken(), "Bearer", tokens.getAccessTokenExpiry())
+            ));
     }
 
     @PostMapping("/refresh")
     public ResponseEntity<ApiResponse<LoginResponse>> refresh(
-        @CookieValue(name = "refreshToken", required = false) String refreshToken,
-        HttpServletResponse httpResponse
+        @CookieValue(name = "refreshToken", required = false) String refreshToken
     ) {
         if (refreshToken == null || refreshToken.isBlank()) {
             throw new AuthException("리프레시 토큰이 없습니다");
@@ -87,39 +83,29 @@ public class AuthController {
 
         LoginTokens tokens = authService.refresh(refreshToken);
 
-        ResponseCookie cookie = ResponseCookie.from("refreshToken", tokens.getRefreshToken())
-            .httpOnly(true)
-            .secure(true)
-            .sameSite("Strict")
-            .maxAge(Duration.ofSeconds(jwtProperties.getRefreshTokenExpiry()))
-            .path("/api/v1/auth")
-            .build();
+        ResponseCookie cookie = authCookieFactory.refreshTokenCookie(
+            tokens.getRefreshToken(),
+            Duration.ofSeconds(jwtProperties.getRefreshTokenExpiry())
+        );
 
-        httpResponse.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-
-        return ResponseEntity.ok(ApiResponse.ok(
-            LoginResponse.of(tokens.getAccessToken(), "Bearer", tokens.getAccessTokenExpiry())
-        ));
+        return ResponseEntity.ok()
+            .header(HttpHeaders.SET_COOKIE, cookie.toString())
+            .body(ApiResponse.ok(
+                LoginResponse.of(tokens.getAccessToken(), "Bearer", tokens.getAccessTokenExpiry())
+            ));
     }
 
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(
-        @AuthenticationPrincipal Long userId,
-        HttpServletResponse httpResponse
+        @AuthenticationPrincipal Long userId
     ) {
         authService.logout(userId);
 
-        ResponseCookie cookie = ResponseCookie.from("refreshToken", "")
-            .httpOnly(true)
-            .secure(true)
-            .sameSite("Strict")
-            .maxAge(0)
-            .path("/api/v1/auth")
+        ResponseCookie cookie = authCookieFactory.expiredRefreshTokenCookie();
+
+        return ResponseEntity.noContent()
+            .header(HttpHeaders.SET_COOKIE, cookie.toString())
             .build();
-
-        httpResponse.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-
-        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/check-email")

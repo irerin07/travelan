@@ -25,18 +25,20 @@ import com.irerin.travelan.auth.dto.LoginTokens;
 import com.irerin.travelan.auth.dto.SignupResponse;
 import com.irerin.travelan.auth.jwt.JwtProvider;
 import com.irerin.travelan.auth.service.AuthService;
+import com.irerin.travelan.auth.support.AuthCookieFactory;
 import com.irerin.travelan.common.config.SecurityConfig;
 import com.irerin.travelan.common.exception.AccountLockedException;
 import com.irerin.travelan.common.exception.AuthException;
 import com.irerin.travelan.common.exception.DuplicateException;
 import com.irerin.travelan.user.dto.SignupCommand;
 import com.irerin.travelan.user.entity.User;
+import com.irerin.travelan.user.repository.UserRepository;
 import com.irerin.travelan.user.service.UserService;
 
 import org.springframework.http.HttpHeaders;
 
 @WebMvcTest(controllers = AuthController.class)
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, AuthCookieFactory.class})
 @org.springframework.boot.test.autoconfigure.json.AutoConfigureJson
 class AuthControllerTest {
 
@@ -44,6 +46,7 @@ class AuthControllerTest {
     @MockitoBean UserService userService;
     @MockitoBean AuthService authService;
     @MockitoBean JwtProvider jwtProvider;
+    @MockitoBean UserRepository userRepository;
 
     private SignupResponse signupResponse;
 
@@ -449,6 +452,12 @@ class AuthControllerTest {
         given(jwtProvider.isValid("valid-access-token")).willReturn(true);
         given(jwtProvider.getUserId("valid-access-token")).willReturn(1L);
         given(jwtProvider.getRole("valid-access-token")).willReturn(com.irerin.travelan.user.entity.UserRole.USER);
+        User activeUser = User.builder()
+            .email("test@example.com").password("encoded").name("홍길동")
+            .phone("01012345678").nickname("여행자").build();
+        ReflectionTestUtils.setField(activeUser, "id", 1L);
+        ReflectionTestUtils.setField(activeUser, "status", com.irerin.travelan.user.entity.UserStatus.ACTIVE);
+        given(userRepository.findById(1L)).willReturn(java.util.Optional.of(activeUser));
 
         mockMvc.perform(post("/api/v1/auth/logout")
                 .header(HttpHeaders.AUTHORIZATION, "Bearer valid-access-token"))

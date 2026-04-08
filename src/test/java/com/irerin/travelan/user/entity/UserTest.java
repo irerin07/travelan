@@ -66,13 +66,25 @@ class UserTest {
     }
 
     @Test
-    void withdraw_대용량_ID에서_닉네임이_10자_이하여야_한다() {
+    void withdraw_대용량_ID에서_닉네임이_9자_이하여야_한다() {
         User user = buildUser();
         ReflectionTestUtils.setField(user, "id", 999_999_999L);
 
         user.withdraw(FIXED_CLOCK);
 
-        assertThat(user.getNickname().length()).isLessThanOrEqualTo(10);
+        assertThat(user.getNickname().length()).isLessThanOrEqualTo(9);
+    }
+
+    @Test
+    void withdraw_ID가_modulo_경계값일때_닉네임이_9자_이하여야_한다() {
+        // id % 9_999_999L 최대값은 9_999_998 (7자리) → "탈퇴9999998" = 9자
+        // 구버그(% 99_999_999L) 로는 최대 8자리가 나와 "탈퇴99999998" = 10자 → 컬럼 위반 가능
+        User user = buildUser();
+        ReflectionTestUtils.setField(user, "id", 99_999_998L);
+
+        user.withdraw(FIXED_CLOCK);
+
+        assertThat(user.getNickname().length()).isLessThanOrEqualTo(9);
     }
 
     @Test

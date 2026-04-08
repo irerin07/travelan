@@ -8,9 +8,9 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.irerin.travelan.auth.support.AuthCookieFactory;
 import com.irerin.travelan.user.service.UserService;
 
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -19,24 +19,18 @@ import lombok.RequiredArgsConstructor;
 public class UserController {
 
     private final UserService userService;
+    private final AuthCookieFactory authCookieFactory;
 
     @DeleteMapping("/me")
     public ResponseEntity<Void> withdraw(
-        @AuthenticationPrincipal Long userId,
-        HttpServletResponse httpResponse
+        @AuthenticationPrincipal Long userId
     ) {
         userService.withdraw(userId);
 
-        ResponseCookie cookie = ResponseCookie.from("refreshToken", "")
-            .httpOnly(true)
-            .secure(true)
-            .sameSite("Strict")
-            .maxAge(0)
-            .path("/api/v1/auth")
+        ResponseCookie cookie = authCookieFactory.expiredRefreshTokenCookie();
+
+        return ResponseEntity.noContent()
+            .header(HttpHeaders.SET_COOKIE, cookie.toString())
             .build();
-
-        httpResponse.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-
-        return ResponseEntity.noContent().build();
     }
 }

@@ -20,23 +20,44 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.Optional;
+
 import com.irerin.travelan.auth.jwt.JwtProvider;
+import com.irerin.travelan.auth.support.AuthCookieFactory;
 import com.irerin.travelan.common.config.SecurityConfig;
 import com.irerin.travelan.common.exception.NotFoundException;
+import com.irerin.travelan.user.entity.User;
 import com.irerin.travelan.user.entity.UserRole;
+import com.irerin.travelan.user.entity.UserStatus;
+import com.irerin.travelan.user.repository.UserRepository;
 import com.irerin.travelan.user.service.UserService;
 
 @WebMvcTest(controllers = UserController.class)
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, AuthCookieFactory.class})
 @org.springframework.boot.test.autoconfigure.json.AutoConfigureJson
 class UserControllerTest {
 
     @Autowired MockMvc mockMvc;
     @MockitoBean UserService userService;
     @MockitoBean JwtProvider jwtProvider;
+    @MockitoBean UserRepository userRepository;
+
+    private void stubActiveUser(long userId) {
+        User user = User.builder()
+            .email("test@example.com")
+            .password("encoded")
+            .name("홍길동")
+            .phone("01012345678")
+            .nickname("여행자")
+            .build();
+        org.springframework.test.util.ReflectionTestUtils.setField(user, "id", userId);
+        org.springframework.test.util.ReflectionTestUtils.setField(user, "status", UserStatus.ACTIVE);
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+    }
 
     @Test
     void withdraw_인증된_사용자_204_반환() throws Exception {
+        stubActiveUser(1L);
         given(jwtProvider.isValid("valid-token")).willReturn(true);
         given(jwtProvider.getUserId("valid-token")).willReturn(1L);
         given(jwtProvider.getRole("valid-token")).willReturn(UserRole.USER);
@@ -48,6 +69,7 @@ class UserControllerTest {
 
     @Test
     void withdraw_응답에_RefreshToken_Cookie_만료_헤더_포함() throws Exception {
+        stubActiveUser(1L);
         given(jwtProvider.isValid("valid-token")).willReturn(true);
         given(jwtProvider.getUserId("valid-token")).willReturn(1L);
         given(jwtProvider.getRole("valid-token")).willReturn(UserRole.USER);
@@ -68,6 +90,7 @@ class UserControllerTest {
 
     @Test
     void withdraw_이미_탈퇴된_회원_404_반환() throws Exception {
+        stubActiveUser(1L);
         given(jwtProvider.isValid("valid-token")).willReturn(true);
         given(jwtProvider.getUserId("valid-token")).willReturn(1L);
         given(jwtProvider.getRole("valid-token")).willReturn(UserRole.USER);
@@ -105,6 +128,7 @@ class UserControllerTest {
     @Test
     void withdraw_인증된_요청은_서비스에_non_null_userId를_전달한다() throws Exception {
         // Given: JwtAuthenticationFilter 가 token 을 검증하고 userId=1L 을 principal 로 설정
+        stubActiveUser(1L);
         given(jwtProvider.isValid("valid-token")).willReturn(true);
         given(jwtProvider.getUserId("valid-token")).willReturn(1L);
         given(jwtProvider.getRole("valid-token")).willReturn(UserRole.USER);

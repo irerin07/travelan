@@ -19,6 +19,7 @@ import com.irerin.travelan.auth.jwt.JwtProperties;
 import com.irerin.travelan.auth.jwt.JwtProvider;
 import com.irerin.travelan.common.response.ApiResponse;
 import com.irerin.travelan.common.response.ErrorResponse;
+import com.irerin.travelan.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 import tools.jackson.databind.ObjectMapper;
@@ -32,11 +33,11 @@ public class SecurityConfig {
     private final ObjectMapper objectMapper;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtProvider jwtProvider) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtProvider jwtProvider, UserRepository userRepository) throws Exception {
         http
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .addFilterBefore(new JwtAuthenticationFilter(jwtProvider), UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(new JwtAuthenticationFilter(jwtProvider, userRepository), UsernamePasswordAuthenticationFilter.class)
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                     "/api/v1/auth/signup",

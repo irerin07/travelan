@@ -1,0 +1,3 @@
+- [Travelan Project Architecture](project_architecture.md) — Spring Boot travel app auth/JWT/user management, layered DTO convention, Flyway, BCrypt
+- [Production Review Findings (2026-04-03)](review_findings_2026_04_03.md) — Full-codebase review: hardcoded creds, pagination DoS, TOCTOU race, nickname length overflow, unbounded history query, missing Flyway versions
+- [Withdraw Feature Review (2026-04-07)](review_findings_2026_04_07_withdraw.md) — DELETE /api/v1/users/me: null userId risk, no re-auth, nickname overflow still present, cookie best-effort clear

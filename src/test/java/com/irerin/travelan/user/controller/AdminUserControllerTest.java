@@ -28,6 +28,7 @@ import com.irerin.travelan.common.config.SecurityConfig;
 import com.irerin.travelan.user.entity.User;
 import com.irerin.travelan.user.entity.UserRole;
 import com.irerin.travelan.user.entity.UserStatus;
+import com.irerin.travelan.user.repository.UserRepository;
 import com.irerin.travelan.user.service.UserService;
 
 @WebMvcTest(controllers = AdminUserController.class)
@@ -38,6 +39,7 @@ class AdminUserControllerTest {
     @Autowired MockMvc mockMvc;
     @MockitoBean UserService userService;
     @MockitoBean JwtProvider jwtProvider;
+    @MockitoBean UserRepository userRepository;
 
     private Page<UserSummaryResponse> pagedResult;
 
