@@ -66,23 +66,24 @@ curl http://localhost:8080/actuator/health
 com.irerin.travelan
 ├── auth
 │   ├── controller       # AuthController (회원가입, 로그인, 토큰 갱신, 로그아웃)
-│   ├── dto              # SignupRequest, SignupResponse, AvailableResponse
+│   ├── dto              # SignupRequest, SignupResponse, LoginRequest, LoginResponse, AvailableResponse
 │   ├── entity           # RefreshToken
-│   ├── jwt              # JwtProvider, JwtAuthenticationFilter
+│   ├── jwt              # JwtProvider, JwtAuthenticationFilter, JwtProperties
 │   ├── repository       # RefreshTokenRepository
-│   ├── service
+│   ├── service          # AuthService
+│   ├── support          # AuthCookieFactory
 │   └── validation       # @PasswordMatch 커스텀 검증 어노테이션
 ├── user
-│   ├── controller       # AdminUserController (관리자 전용 회원 목록)
+│   ├── controller       # UserController (회원 탈퇴), AdminUserController (관리자 전용 회원 목록)
 │   ├── dto              # SignupCommand (서비스 레이어 DTO)
-│   ├── entity           # User, UserInterestRegion, UserRole, UserStatus
-│   ├── repository       # UserRepository, UserInterestRegionRepository
+│   ├── entity           # User, UserInterestRegion, UserHistory, UserAction, UserRole, UserStatus
+│   ├── repository       # UserRepository, UserInterestRegionRepository, UserHistoryRepository
 │   └── service          # UserService
 ├── admin
 │   └── dto              # UserSummaryResponse
 ├── common
 │   ├── config           # SecurityConfig, JpaConfig
-│   ├── exception        # GlobalExceptionHandler, DuplicateException, AuthException
+│   ├── exception        # GlobalExceptionHandler, DuplicateException, AuthException, NotFoundException
 │   └── response         # ApiResponse, ErrorResponse, PageMeta
 └── TravelanApplication.java
 ```
@@ -102,6 +103,12 @@ com.irerin.travelan
 | GET | `/api/v1/auth/check-email` | 이메일 중복 확인 | 불필요 |
 | GET | `/api/v1/auth/check-phone` | 핸드폰 번호 중복 확인 | 불필요 |
 | GET | `/api/v1/auth/check-nickname` | 닉네임 중복 확인 | 불필요 |
+
+### 회원 API
+
+| Method | Endpoint | 설명 | 인증 |
+|--------|----------|------|------|
+| DELETE | `/api/v1/users/me` | 회원 탈퇴 (Soft Delete + 익명화) | Access Token |
 
 ### 관리자 API
 
@@ -150,11 +157,22 @@ com.irerin.travelan
 {
   "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
   "tokenType": "Bearer",
-  "expiresIn": 3600
+  "expiresIn": 900
 }
 ```
 
 > Refresh Token은 `HttpOnly; Secure; SameSite=Strict` Cookie로 전달
+
+### 회원 탈퇴 `DELETE /api/v1/users/me`
+
+**Request Header**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Response** `204 No Content`
+
+> 처리 흐름: 사용자 status를 `WITHDRAWN`으로 변경하고 email/phone/nickname을 익명화 → 모든 RefreshToken revoke → `UserHistory`에 `WITHDRAWAL` 기록 → Refresh Token Cookie를 `Max-Age=0`으로 만료. 이미 탈퇴한 회원은 계정 열거 방지를 위해 `404 NOT_FOUND` 반환.
 
 ### 전체 회원 목록 `GET /api/v1/admin/users`
 
@@ -227,6 +245,7 @@ com.irerin.travelan
 | 400 | 입력값 유효성 실패 |
 | 401 | 인증 실패 / 토큰 없음 또는 만료 |
 | 403 | 권한 없음 |
+| 404 | 존재하지 않는 리소스 (이미 탈퇴한 회원 등) |
 | 409 | 이메일 / 핸드폰 / 닉네임 중복 |
 | 429 | 로그인 5회 연속 실패 → 계정 잠금 |
 
@@ -234,7 +253,7 @@ com.irerin.travelan
 
 ## 인증 구조
 
-- **Access Token**: JWT, 유효기간 1시간, `Authorization: Bearer {token}` 헤더
+- **Access Token**: JWT, 유효기간 15분, `Authorization: Bearer {token}` 헤더
 - **Refresh Token**: JWT, 유효기간 30일, `HttpOnly Cookie`, DB 저장
 - **Refresh Token Rotation**: 토큰 갱신 시 새 Refresh Token 발급, 재사용 감지 시 전체 세션 무효화
 
@@ -244,12 +263,14 @@ com.irerin.travelan
 
 | 파일 | 내용 |
 |------|------|
-| `V1__create_users.sql` | `users` 테이블 생성 |
-| `V2__create_user_interest_region.sql` | `user_interest_region` 테이블 생성 |
+| `V1__create_member.sql` | `users` 테이블 생성 |
+| `V2__create_member_interest_region.sql` | `user_interest_region` 테이블 생성 |
 | `V3__create_refresh_token.sql` | `refresh_token` 테이블 생성 |
 | `V5__add_role_to_users.sql` | `users` 테이블에 `role` 컬럼 추가 |
-
-> V4는 Phase 5 (로그인 실패 횟수 추적) 용으로 예약
+| `V6__add_revoked_to_refresh_token.sql` | `refresh_token`에 `revoked` 컬럼 추가 (Rotation/재사용 감지) |
+| `V8__add_withdrawal_columns_to_users.sql` | `users`에 탈퇴 관련 컬럼 추가 (`original_email`, `withdrawn_at`) |
+| `V9__create_user_history.sql` | `user_history` 테이블 생성 (회원 이벤트 감사 로그) |
+| `V10__add_login_fail_columns.sql` | `users`에 로그인 실패 횟수/잠금 컬럼 추가 |
 
 ---
 
@@ -260,6 +281,7 @@ com.irerin.travelan
 | 1 | 기반 구축 (엔티티, DB 마이그레이션, 공통 응답/예외) | 완료 |
 | 2 | 회원가입 (유효성 검증, 중복 확인, BCrypt 해싱) | 완료 |
 | 2.5 | 관리자 회원 목록 조회 API (RBAC, 페이징) | 완료 |
-| 3 | 로그인 & JWT (토큰 발급, 인증 필터) | 예정 |
-| 4 | 토큰 갱신 / 로그아웃 (Refresh Token Rotation) | 예정 |
-| 5 | 로그인 보안 강화 (Brute Force 방어, 계정 잠금) | 예정 |
+| 3 | 로그인 & JWT (토큰 발급, 인증 필터) | 완료 |
+| 4 | 토큰 갱신 / 로그아웃 (Refresh Token Rotation) | 완료 |
+| 5 | 로그인 보안 강화 (Brute Force 방어, 계정 잠금) | 완료 |
+| 6 | 회원 탈퇴 (Soft Delete + 익명화 + 세션 무효화) | 완료 |
