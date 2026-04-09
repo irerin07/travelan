@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
 
 import java.time.Clock;
@@ -24,8 +25,11 @@ import com.irerin.travelan.board.dto.CreatePostCommand;
 import com.irerin.travelan.board.dto.PostDetailResponse;
 import com.irerin.travelan.board.dto.UpdatePostCommand;
 import com.irerin.travelan.board.entity.Post;
+import com.irerin.travelan.board.entity.PostHistory;
+import com.irerin.travelan.board.entity.PostHistoryAction;
 import com.irerin.travelan.board.entity.PostStatus;
 import com.irerin.travelan.board.entity.Region;
+import com.irerin.travelan.board.repository.PostHistoryRepository;
 import com.irerin.travelan.board.repository.PostRepository;
 import com.irerin.travelan.board.repository.RegionRepository;
 import com.irerin.travelan.common.exception.ForbiddenException;
@@ -38,6 +42,7 @@ import com.irerin.travelan.user.repository.UserRepository;
 class PostServiceTest {
 
     @Mock PostRepository postRepository;
+    @Mock PostHistoryRepository postHistoryRepository;
     @Mock RegionRepository regionRepository;
     @Mock UserRepository userRepository;
     private final Clock clock = Clock.fixed(Instant.parse("2026-04-09T12:00:00Z"), ZoneId.of("UTC"));
@@ -49,7 +54,7 @@ class PostServiceTest {
 
     @BeforeEach
     void setUp() {
-        postService = new PostService(postRepository, regionRepository, userRepository, clock);
+        postService = new PostService(postRepository, postHistoryRepository, regionRepository, userRepository, clock);
         region = Region.of("seoul", "서울", "desc", 1, true);
         ReflectionTestUtils.setField(region, "id", 10L);
         author = User.of("a@x.com", "p", "홍길동", "01000000000", "여행자");
@@ -91,14 +96,20 @@ class PostServiceTest {
     }
 
     @Test
-    void update_succeedsForAuthor() {
-        Post post = Post.of(region, author, "t", "c");
+    void update_succeedsForAuthorAndSnapshotsOriginal() {
+        Post post = Post.of(region, author, "원본제목", "원본내용");
         ReflectionTestUtils.setField(post, "id", 5L);
         given(postRepository.findByIdAndStatus(5L, PostStatus.PUBLISHED)).willReturn(Optional.of(post));
 
         PostDetailResponse result = postService.update(UpdatePostCommand.of(5L, 1L, "new", "<b>hi</b>"));
+
         assertThat(result.getTitle()).isEqualTo("new");
         assertThat(result.getContent()).contains("<b>hi</b>");
+        verify(postHistoryRepository).save(argThat(h ->
+            h.getAction() == PostHistoryAction.UPDATED
+                && h.getTitle().equals("원본제목")
+                && h.getContent().equals("원본내용")
+                && h.getEditorId().equals(1L)));
     }
 
     @Test
@@ -113,6 +124,8 @@ class PostServiceTest {
 
         assertThat(post.getStatus()).isEqualTo(PostStatus.DELETED);
         assertThat(post.getDeletedAt()).isEqualTo(LocalDateTime.now(clock));
+        verify(postHistoryRepository).save(argThat(h ->
+            h.getAction() == PostHistoryAction.DELETED && h.getEditorId().equals(2L)));
     }
 
     @Test

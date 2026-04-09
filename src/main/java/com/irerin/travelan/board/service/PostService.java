@@ -12,8 +12,11 @@ import com.irerin.travelan.board.dto.PostDetailResponse;
 import com.irerin.travelan.board.dto.PostSummaryResponse;
 import com.irerin.travelan.board.dto.UpdatePostCommand;
 import com.irerin.travelan.board.entity.Post;
+import com.irerin.travelan.board.entity.PostHistory;
+import com.irerin.travelan.board.entity.PostHistoryAction;
 import com.irerin.travelan.board.entity.PostStatus;
 import com.irerin.travelan.board.entity.Region;
+import com.irerin.travelan.board.repository.PostHistoryRepository;
 import com.irerin.travelan.board.repository.PostRepository;
 import com.irerin.travelan.board.repository.RegionRepository;
 import com.irerin.travelan.board.support.HtmlSanitizer;
@@ -31,6 +34,7 @@ import lombok.RequiredArgsConstructor;
 public class PostService {
 
     private final PostRepository postRepository;
+    private final PostHistoryRepository postHistoryRepository;
     private final RegionRepository regionRepository;
     private final UserRepository userRepository;
     private final Clock clock;
@@ -70,6 +74,7 @@ public class PostService {
             throw new ForbiddenException("게시글 수정 권한이 없습니다");
         }
 
+        postHistoryRepository.save(PostHistory.snapshot(post, PostHistoryAction.UPDATED, command.getRequesterId()));
         post.update(command.getTitle(), HtmlSanitizer.sanitize(command.getContent()));
 
         return PostDetailResponse.from(post);
@@ -88,6 +93,7 @@ public class PostService {
             throw new ForbiddenException("게시글 삭제 권한이 없습니다");
         }
 
+        postHistoryRepository.save(PostHistory.snapshot(post, PostHistoryAction.DELETED, requesterId));
         post.delete(clock);
     }
 
