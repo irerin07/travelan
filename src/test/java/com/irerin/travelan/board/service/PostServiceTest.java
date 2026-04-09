@@ -6,6 +6,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -36,7 +40,8 @@ class PostServiceTest {
     @Mock PostRepository postRepository;
     @Mock RegionRepository regionRepository;
     @Mock UserRepository userRepository;
-    @InjectMocks PostService postService;
+    private final Clock clock = Clock.fixed(Instant.parse("2026-04-09T12:00:00Z"), ZoneId.of("UTC"));
+    private PostService postService;
 
     private Region region;
     private User author;
@@ -44,6 +49,7 @@ class PostServiceTest {
 
     @BeforeEach
     void setUp() {
+        postService = new PostService(postRepository, regionRepository, userRepository, clock);
         region = Region.of("seoul", "서울", "desc", 1, true);
         ReflectionTestUtils.setField(region, "id", 10L);
         author = User.of("a@x.com", "p", "홍길동", "01000000000", "여행자");
@@ -106,6 +112,7 @@ class PostServiceTest {
         postService.delete(5L, 2L);
 
         assertThat(post.getStatus()).isEqualTo(PostStatus.DELETED);
+        assertThat(post.getDeletedAt()).isEqualTo(LocalDateTime.now(clock));
     }
 
     @Test

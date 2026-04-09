@@ -1,5 +1,6 @@
 package com.irerin.travelan.board.entity;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 
 import org.springframework.data.annotation.CreatedDate;
@@ -68,6 +69,9 @@ public class Post {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
     @Builder(access = AccessLevel.PRIVATE)
     private Post(Region region, User author, String title, String content) {
         this.region = region;
@@ -92,8 +96,9 @@ public class Post {
         this.content = content;
     }
 
-    public void delete() {
+    public void delete(Clock clock) {
         this.status = PostStatus.DELETED;
+        this.deletedAt = LocalDateTime.now(clock);
     }
 
     public void increaseViewCount() {
@@ -115,5 +120,5 @@ public class Post {
     public boolean canDelete(Long userId, UserRole role) {
         return isAuthor(userId) || role == UserRole.ADMIN;
     }
-    
+
 }

@@ -1,5 +1,7 @@
 package com.irerin.travelan.board.service;
 
+import java.time.Clock;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -31,6 +33,7 @@ public class PostService {
     private final PostRepository postRepository;
     private final RegionRepository regionRepository;
     private final UserRepository userRepository;
+    private final Clock clock;
 
     @Transactional
     public PostDetailResponse create(CreatePostCommand command) {
@@ -62,10 +65,13 @@ public class PostService {
     public PostDetailResponse update(UpdatePostCommand command) {
         Post post = postRepository.findByIdAndStatus(command.getPostId(), PostStatus.PUBLISHED)
             .orElseThrow(() -> new NotFoundException("게시글을 찾을 수 없습니다"));
+
         if (!post.canModify(command.getRequesterId())) {
             throw new ForbiddenException("게시글 수정 권한이 없습니다");
         }
+
         post.update(command.getTitle(), HtmlSanitizer.sanitize(command.getContent()));
+
         return PostDetailResponse.from(post);
     }
 
@@ -82,7 +88,7 @@ public class PostService {
             throw new ForbiddenException("게시글 삭제 권한이 없습니다");
         }
 
-        post.delete();
+        post.delete(clock);
     }
 
 }
