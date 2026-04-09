@@ -10,6 +10,8 @@ Build tool: Gradle (build.gradle). Test framework: JUnit 5 + Mockito + Spring Bo
 
 `UserControllerTest` (com.irerin.travelan.user.controller.UserControllerTest): 6 tests, all covering the `withdraw` endpoint. Uses @WebMvcTest slice + Mockito. Passes cleanly as of 2026-04-07. Tests cover: unauthenticated filter block, 401 response, authenticated userId delegation to service, 404 for withdrawn user, 204 success, and RefreshToken cookie expiry header on response.
 
+**PostServiceTest** (com.irerin.travelan.board.service.PostServiceTest): 7 tests, all passing as of 2026-04-09. Tests cover: create (sanitize + save, region-not-found throw), get (view count increment), update (author success + snapshot, forbidden for non-author), delete (forbidden for non-author/non-admin, allowed for admin). Uses MockitoExtension — no Spring context.
+
 **Known recurring failure**: `com.irerin.travelan.TravelanApplicationTests#contextLoads()` fails every run because no datasource is configured for the test environment. Spring cannot determine a JDBC driver class. The Flyway + HikariCP chain all fail as a result.
 
 **Why:** The full application context requires a real DB URL. There is no `application-test.properties` or in-memory DB override for this test class.

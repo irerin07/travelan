@@ -1,5 +1,7 @@
 package com.irerin.travelan.board.controller;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -14,15 +16,18 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.irerin.travelan.board.dto.CreatePostCommand;
 import com.irerin.travelan.board.dto.CreatePostRequest;
 import com.irerin.travelan.board.dto.PostDetailResponse;
 import com.irerin.travelan.board.dto.PostSummaryResponse;
+import com.irerin.travelan.board.dto.UpdatePostCommand;
 import com.irerin.travelan.board.dto.UpdatePostRequest;
 import com.irerin.travelan.board.service.PostService;
 import com.irerin.travelan.common.response.ApiResponse;
 import com.irerin.travelan.common.response.PageMeta;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -32,12 +37,13 @@ public class PostController {
     private final PostService postService;
 
     @GetMapping("/api/v1/regions/{regionCode}/posts")
-    public ApiResponse<java.util.List<PostSummaryResponse>> list(
-        @PathVariable String regionCode,
+    public ApiResponse<List<PostSummaryResponse>> list(
+        @PathVariable @Size(max = 50, message = "지역 코드는 50자 이하여야 합니다") String regionCode,
         @PageableDefault(size = 20) Pageable pageable
     ) {
         Page<PostSummaryResponse> page = postService.listByRegion(regionCode, pageable);
-        return ApiResponse.<java.util.List<PostSummaryResponse>>builder()
+
+        return ApiResponse.<List<PostSummaryResponse>>builder()
             .data(page.getContent())
             .page(PageMeta.from(page, page.getNumber() + 1))
             .build();
@@ -51,11 +57,11 @@ public class PostController {
     @PostMapping("/api/v1/regions/{regionCode}/posts")
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<PostDetailResponse> create(
-        @PathVariable String regionCode,
+        @PathVariable @Size(max = 50, message = "지역 코드는 50자 이하여야 합니다") String regionCode,
         @Valid @RequestBody CreatePostRequest request,
         @AuthenticationPrincipal Long userId
     ) {
-        return ApiResponse.ok(postService.create(request.toCommand(regionCode, userId)));
+        return ApiResponse.ok(postService.create(CreatePostCommand.from(request, regionCode, userId)));
     }
 
     @PutMapping("/api/v1/posts/{postId}")
@@ -64,7 +70,7 @@ public class PostController {
         @Valid @RequestBody UpdatePostRequest request,
         @AuthenticationPrincipal Long userId
     ) {
-        return ApiResponse.ok(postService.update(request.toCommand(postId, userId)));
+        return ApiResponse.ok(postService.update(UpdatePostCommand.from(request, postId, userId)));
     }
 
     @DeleteMapping("/api/v1/posts/{postId}")

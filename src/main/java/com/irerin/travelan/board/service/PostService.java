@@ -43,7 +43,7 @@ public class PostService {
     public PostDetailResponse create(CreatePostCommand command) {
         Region region = regionRepository.findByCodeAndActiveTrue(command.getRegionCode())
             .orElseThrow(() -> new NotFoundException("지역을 찾을 수 없습니다"));
-        User author = userRepository.findById(command.getAuthorId())
+        User author = userRepository.findById(command.getRequesterId())
             .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다"));
 
         Post post = Post.of(region, author, command.getTitle(), HtmlSanitizer.sanitize(command.getContent()));

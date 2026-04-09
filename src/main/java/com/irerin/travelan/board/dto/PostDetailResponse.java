@@ -5,11 +5,10 @@ import java.time.LocalDateTime;
 import com.irerin.travelan.board.entity.Post;
 
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 
 @Getter
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class PostDetailResponse {
 
     private final Long id;
@@ -22,17 +21,30 @@ public class PostDetailResponse {
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
 
+    @Builder(access = AccessLevel.PRIVATE)
+    private PostDetailResponse(Long id, String regionCode, String regionName, String title, String content, String authorNickname, long viewCount, LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this.id = id;
+        this.regionCode = regionCode;
+        this.regionName = regionName;
+        this.title = title;
+        this.content = content;
+        this.authorNickname = authorNickname;
+        this.viewCount = viewCount;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+
     public static PostDetailResponse from(Post post) {
-        return new PostDetailResponse(
-            post.getId(),
-            post.getRegion().getCode(),
-            post.getRegion().getName(),
-            post.getTitle(),
-            post.getContent(),
-            post.getAuthor().getNickname(),
-            post.getViewCount(),
-            post.getCreatedAt(),
-            post.getUpdatedAt()
-        );
+        return PostDetailResponse.builder()
+            .id(post.getId())
+            .regionCode(post.getRegion().getCode())
+            .regionName(post.getRegion().getName())
+            .title(post.getTitle())
+            .content(post.getContent())
+            .authorNickname(post.getAuthor().getNickname())
+            .viewCount(post.getViewCount())
+            .createdAt(post.getCreatedAt())
+            .updatedAt(post.getUpdatedAt())
+            .build();
     }
 }

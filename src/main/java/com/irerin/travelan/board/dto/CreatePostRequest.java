@@ -16,9 +16,6 @@ public class CreatePostRequest {
     private String title;
 
     @NotBlank(message = "본문은 필수입니다")
+    @Size(max = 10000, message = "본문은 10000자 이하여야 합니다")
     private String content;
-
-    public CreatePostCommand toCommand(String regionCode, Long authorId) {
-        return CreatePostCommand.of(regionCode, authorId, this.title, this.content);
-    }
 }

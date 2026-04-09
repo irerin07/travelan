@@ -16,9 +16,6 @@ public class UpdatePostRequest {
     private String title;
 
     @NotBlank(message = "본문은 필수입니다")
+    @Size(max = 10000, message = "본문은 10000자 이하여야 합니다")
     private String content;
-
-    public UpdatePostCommand toCommand(Long postId, Long requesterId) {
-        return UpdatePostCommand.of(postId, requesterId, this.title, this.content);
-    }
 }

@@ -1,11 +1,10 @@
 package com.irerin.travelan.board.dto;
 
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 
 @Getter
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class UpdatePostCommand {
 
     private final Long postId;
@@ -13,7 +12,20 @@ public class UpdatePostCommand {
     private final String title;
     private final String content;
 
-    public static UpdatePostCommand of(Long postId, Long requesterId, String title, String content) {
-        return new UpdatePostCommand(postId, requesterId, title, content);
+    @Builder(access = AccessLevel.PRIVATE)
+    private UpdatePostCommand(Long postId, Long requesterId, String title, String content) {
+        this.postId = postId;
+        this.requesterId = requesterId;
+        this.title = title;
+        this.content = content;
+    }
+
+    public static UpdatePostCommand from(UpdatePostRequest request, Long postId, Long requesterId) {
+        return UpdatePostCommand.builder()
+            .postId(postId)
+            .requesterId(requesterId)
+            .title(request.getTitle())
+            .content(request.getContent())
+            .build();
     }
 }

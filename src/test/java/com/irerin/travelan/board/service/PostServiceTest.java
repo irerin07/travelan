@@ -22,8 +22,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.irerin.travelan.board.dto.CreatePostCommand;
+import com.irerin.travelan.board.dto.CreatePostRequest;
 import com.irerin.travelan.board.dto.PostDetailResponse;
 import com.irerin.travelan.board.dto.UpdatePostCommand;
+import com.irerin.travelan.board.dto.UpdatePostRequest;
 import com.irerin.travelan.board.entity.Post;
 import com.irerin.travelan.board.entity.PostHistory;
 import com.irerin.travelan.board.entity.PostHistoryAction;
@@ -70,7 +72,7 @@ class PostServiceTest {
         given(postRepository.save(any(Post.class))).willAnswer(inv -> inv.getArgument(0));
 
         PostDetailResponse result = postService.create(
-            CreatePostCommand.of("seoul", 1L, "title", "<p>ok</p><script>bad</script>")
+            createPostCommand("seoul", 1L, "title", "<p>ok</p><script>bad</script>")
         );
 
         assertThat(result.getTitle()).isEqualTo("title");
@@ -81,7 +83,7 @@ class PostServiceTest {
     @Test
     void create_throwsWhenRegionNotFound() {
         given(regionRepository.findByCodeAndActiveTrue("nope")).willReturn(Optional.empty());
-        assertThatThrownBy(() -> postService.create(CreatePostCommand.of("nope", 1L, "t", "c")))
+        assertThatThrownBy(() -> postService.create(createPostCommand("nope", 1L, "t", "c")))
             .isInstanceOf(NotFoundException.class);
     }
 
@@ -91,7 +93,7 @@ class PostServiceTest {
         ReflectionTestUtils.setField(post, "id", 5L);
         given(postRepository.findByIdAndStatus(5L, PostStatus.PUBLISHED)).willReturn(Optional.of(post));
 
-        assertThatThrownBy(() -> postService.update(UpdatePostCommand.of(5L, 2L, "t2", "c2")))
+        assertThatThrownBy(() -> postService.update(updatePostCommand(5L, 2L, "t2", "c2")))
             .isInstanceOf(ForbiddenException.class);
     }
 
@@ -101,7 +103,7 @@ class PostServiceTest {
         ReflectionTestUtils.setField(post, "id", 5L);
         given(postRepository.findByIdAndStatus(5L, PostStatus.PUBLISHED)).willReturn(Optional.of(post));
 
-        PostDetailResponse result = postService.update(UpdatePostCommand.of(5L, 1L, "new", "<b>hi</b>"));
+        PostDetailResponse result = postService.update(updatePostCommand(5L, 1L, "new", "<b>hi</b>"));
 
         assertThat(result.getTitle()).isEqualTo("new");
         assertThat(result.getContent()).contains("<b>hi</b>");
@@ -148,5 +150,19 @@ class PostServiceTest {
         postService.get(5L);
 
         assertThat(post.getViewCount()).isEqualTo(1L);
+    }
+
+    private CreatePostCommand createPostCommand(String regionCode, Long requesterId, String title, String content) {
+        CreatePostRequest request = new CreatePostRequest();
+        request.setTitle(title);
+        request.setContent(content);
+        return CreatePostCommand.from(request, regionCode, requesterId);
+    }
+
+    private UpdatePostCommand updatePostCommand(Long postId, Long requesterId, String title, String content) {
+        UpdatePostRequest request = new UpdatePostRequest();
+        request.setTitle(title);
+        request.setContent(content);
+        return UpdatePostCommand.from(request, postId, requesterId);
     }
 }

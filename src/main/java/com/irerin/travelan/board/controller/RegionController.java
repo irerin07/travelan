@@ -23,4 +23,5 @@ public class RegionController {
     public ApiResponse<List<RegionResponse>> list() {
         return ApiResponse.ok(regionService.findAllActive());
     }
+
 }
