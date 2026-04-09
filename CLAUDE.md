@@ -48,6 +48,10 @@
 - 서비스 레이어 DTO: `{domain}.dto` (예: `user.dto.SignupCommand`)
 - 변환은 Command의 정적 팩토리 메서드 `from(request)`로 처리
 
+### Command 역할 구분
+- **생성 Command** (예: `CreatePostCommand`): `toEntity(...)` 메서드로 새 엔티티 생성 책임을 가짐. 엔티티 빌더 호출과 입력 가공(HtmlSanitizer 등)을 Command 내부에서 처리
+- **수정 Command** (예: `UpdatePostCommand`): 순수 데이터 운반체. 기존 엔티티 수정 로직은 Service에서 처리
+
 ### 객체 생성 방식
 - `new` 연산자를 직접 사용하지 말 것
 - 엔티티: `@NoArgsConstructor(access = PROTECTED)` + `@Builder(access = PRIVATE)` private 생성자 + 정적 팩토리 메서드 `of(...)` 사용

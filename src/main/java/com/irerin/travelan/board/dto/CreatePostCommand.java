@@ -1,5 +1,9 @@
 package com.irerin.travelan.board.dto;
 
+import com.irerin.travelan.board.entity.Post;
+import com.irerin.travelan.board.entity.Region;
+import com.irerin.travelan.board.support.HtmlSanitizer;
+import com.irerin.travelan.user.entity.User;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -28,4 +32,14 @@ public class CreatePostCommand {
             .content(request.getContent())
             .build();
     }
+
+    public Post toEntity(Region region, User author) {
+        return Post.builder()
+                .region(region)
+                .author(author)
+                .title(title)
+                .content(HtmlSanitizer.sanitize(content))
+                .build();
+    }
+
 }

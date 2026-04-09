@@ -72,8 +72,8 @@ public class Post {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-    @Builder(access = AccessLevel.PRIVATE)
-    private Post(Region region, User author, String title, String content) {
+    @Builder
+    public Post(Region region, User author, String title, String content) {
         this.region = region;
         this.author = author;
         this.title = title;

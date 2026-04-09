@@ -19,7 +19,7 @@ spring:
     locations: classpath:db/migration
 
 jwt:
-  secret: ${JWT_SECRET}
+  secret: jwt_secret_must_be_changed_in_production_in_case_of_security_breaches
   access-token-expiry: 900       # 15분 (초)
   refresh-token-expiry: 2592000  # 30일 (초)
 
