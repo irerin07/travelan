@@ -115,4 +115,5 @@ public class Post {
     public boolean canDelete(Long userId, UserRole role) {
         return isAuthor(userId) || role == UserRole.ADMIN;
     }
+    
 }

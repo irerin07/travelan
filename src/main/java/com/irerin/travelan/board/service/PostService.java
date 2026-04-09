@@ -73,12 +73,16 @@ public class PostService {
     public void delete(Long postId, Long requesterId) {
         Post post = postRepository.findByIdAndStatus(postId, PostStatus.PUBLISHED)
             .orElseThrow(() -> new NotFoundException("게시글을 찾을 수 없습니다"));
+
         UserRole role = userRepository.findById(requesterId)
             .map(User::getRole)
             .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다"));
+
         if (!post.canDelete(requesterId, role)) {
             throw new ForbiddenException("게시글 삭제 권한이 없습니다");
         }
+
         post.delete();
     }
+
 }
