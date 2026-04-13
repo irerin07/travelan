@@ -157,6 +157,27 @@ class PostServiceTest {
         assertThat(post.getViewCount()).isEqualTo(1L);
     }
 
+    @Test
+    void create_withImageIds_onlyAttachesImagesOwnedByRequester() {
+        given(regionRepository.findByCodeAndActiveTrue("seoul")).willReturn(Optional.of(region));
+        given(userRepository.findById(1L)).willReturn(Optional.of(author));
+        given(postRepository.save(any(Post.class))).willAnswer(inv -> {
+            Post p = inv.getArgument(0);
+            ReflectionTestUtils.setField(p, "id", 10L);
+            return p;
+        });
+        given(postImageRepository.findAllByIdInAndPostIsNullAndUploaderId(List.of(99L), 1L))
+            .willReturn(Collections.emptyList());
+
+        CreatePostRequest request = new CreatePostRequest();
+        request.setTitle("title");
+        request.setContent("content");
+        request.setImageIds(List.of(99L));
+        PostDetailResponse result = postService.create(CreatePostCommand.from(request, "seoul", 1L));
+
+        assertThat(result.getImages()).isEmpty();
+    }
+
     private CreatePostCommand createPostCommand(String regionCode, Long requesterId, String title, String content) {
         CreatePostRequest request = new CreatePostRequest();
         request.setTitle(title);

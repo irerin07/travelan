@@ -54,7 +54,7 @@ class ImageControllerTest {
 
     @Test
     void upload_returns201WithImageResponses() throws Exception {
-        PostImage image = PostImage.of("/uploads/posts/1/2026/04/uuid.jpg", "photo.jpg", 1024);
+        PostImage image = PostImage.of("/uploads/posts/1/2026/04/uuid.jpg", "photo.jpg", 1024, 1L);
         ReflectionTestUtils.setField(image, "id", 1L);
         given(imageUploadService.upload(any(UploadImageCommand.class)))
             .willReturn(List.of(PostImageResponse.from(image)));

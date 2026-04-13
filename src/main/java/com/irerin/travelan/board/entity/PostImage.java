@@ -44,6 +44,9 @@ public class PostImage {
     @Column(nullable = false)
     private long size;
 
+    @Column(name = "uploader_id", nullable = false)
+    private Long uploaderId;
+
     @Column(name = "display_order", nullable = false)
     private int displayOrder;
 
@@ -52,18 +55,20 @@ public class PostImage {
     private LocalDateTime createdAt;
 
     @Builder(access = AccessLevel.PRIVATE)
-    private PostImage(String url, String originalName, long size) {
+    private PostImage(String url, String originalName, long size, Long uploaderId) {
         this.url = url;
         this.originalName = originalName;
         this.size = size;
+        this.uploaderId = uploaderId;
         this.displayOrder = 0;
     }
 
-    public static PostImage of(String url, String originalName, long size) {
+    public static PostImage of(String url, String originalName, long size, Long uploaderId) {
         return PostImage.builder()
             .url(url)
             .originalName(originalName)
             .size(size)
+            .uploaderId(uploaderId)
             .build();
     }
 

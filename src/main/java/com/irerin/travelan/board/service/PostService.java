@@ -53,7 +53,7 @@ public class PostService {
             .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다"));
 
         Post post = postRepository.save(command.toEntity(region, author));
-        List<PostImage> images = attachImages(post, command.getImageIds());
+        List<PostImage> images = attachImages(post, command.getImageIds(), command.getRequesterId());
 
         return PostDetailResponse.from(post, images.stream().map(PostImageResponse::from).toList());
     }
@@ -88,7 +88,7 @@ public class PostService {
         post.update(command.getTitle(), HtmlSanitizer.sanitize(command.getContent()));
 
         detachImages(post.getId());
-        List<PostImage> images = attachImages(post, command.getImageIds());
+        List<PostImage> images = attachImages(post, command.getImageIds(), command.getRequesterId());
 
         return PostDetailResponse.from(post, images.stream().map(PostImageResponse::from).toList());
     }
@@ -110,16 +110,16 @@ public class PostService {
         post.delete(clock);
     }
 
-    private List<PostImage> attachImages(Post post, List<Long> imageIds) {
+    private List<PostImage> attachImages(Post post, List<Long> imageIds, Long requesterId) {
         if (imageIds == null || imageIds.isEmpty()) {
             return List.of();
         }
 
-        List<PostImage> images = postImageRepository.findAllByIdInAndPostIsNull(imageIds);
+        List<PostImage> images = postImageRepository.findAllByIdInAndPostIsNullAndUploaderId(imageIds, requesterId);
         for (int i = 0; i < images.size(); i++) {
             images.get(i).attachTo(post, i);
         }
-        
+
         return images;
     }
 

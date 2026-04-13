@@ -12,5 +12,7 @@ public interface PostImageRepository extends JpaRepository<PostImage, Long> {
 
     List<PostImage> findAllByIdInAndPostIsNull(List<Long> ids);
 
+    List<PostImage> findAllByIdInAndPostIsNullAndUploaderId(List<Long> ids, Long uploaderId);
+
     List<PostImage> findByPostId(Long postId);
 }
