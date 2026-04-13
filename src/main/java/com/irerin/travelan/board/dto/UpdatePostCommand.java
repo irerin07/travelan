@@ -1,5 +1,7 @@
 package com.irerin.travelan.board.dto;
 
+import java.util.List;
+
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -11,13 +13,15 @@ public class UpdatePostCommand {
     private final Long requesterId;
     private final String title;
     private final String content;
+    private final List<Long> imageIds;
 
     @Builder(access = AccessLevel.PRIVATE)
-    private UpdatePostCommand(Long postId, Long requesterId, String title, String content) {
+    private UpdatePostCommand(Long postId, Long requesterId, String title, String content, List<Long> imageIds) {
         this.postId = postId;
         this.requesterId = requesterId;
         this.title = title;
         this.content = content;
+        this.imageIds = imageIds;
     }
 
     public static UpdatePostCommand from(UpdatePostRequest request, Long postId, Long requesterId) {
@@ -26,6 +30,7 @@ public class UpdatePostCommand {
             .requesterId(requesterId)
             .title(request.getTitle())
             .content(request.getContent())
+            .imageIds(request.getImageIds())
             .build();
     }
 }

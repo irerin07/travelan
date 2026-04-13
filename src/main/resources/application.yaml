@@ -14,9 +14,17 @@ spring:
   jpa:
     hibernate:
       ddl-auto: none
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 50MB
   flyway:
     enabled: true
     locations: classpath:db/migration
+
+app:
+  upload:
+    root: ./uploads
 
 jwt:
   secret: jwt_secret_must_be_changed_in_production_in_case_of_security_breaches

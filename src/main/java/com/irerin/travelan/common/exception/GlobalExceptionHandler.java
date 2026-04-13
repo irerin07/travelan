@@ -59,6 +59,12 @@ public class GlobalExceptionHandler {
             .body(ApiResponse.error(ErrorResponse.of("VALIDATION_ERROR", "입력값이 올바르지 않습니다", fieldErrors)));
     }
 
+    @ExceptionHandler(InvalidFileException.class)
+    public ResponseEntity<ApiResponse<?>> handleInvalidFile(InvalidFileException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(ApiResponse.error(ErrorResponse.of("INVALID_FILE", ex.getMessage())));
+    }
+
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<ApiResponse<?>> handleNotFound(NotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)

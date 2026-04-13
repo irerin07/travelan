@@ -1,5 +1,7 @@
 package com.irerin.travelan.board.dto;
 
+import java.util.List;
+
 import com.irerin.travelan.board.entity.Post;
 import com.irerin.travelan.board.entity.Region;
 import com.irerin.travelan.board.support.HtmlSanitizer;
@@ -15,13 +17,15 @@ public class CreatePostCommand {
     private final Long requesterId;
     private final String title;
     private final String content;
+    private final List<Long> imageIds;
 
     @Builder(access = AccessLevel.PRIVATE)
-    private CreatePostCommand(String regionCode, Long requesterId, String title, String content) {
+    private CreatePostCommand(String regionCode, Long requesterId, String title, String content, List<Long> imageIds) {
         this.regionCode = regionCode;
         this.requesterId = requesterId;
         this.title = title;
         this.content = content;
+        this.imageIds = imageIds;
     }
 
     public static CreatePostCommand from(CreatePostRequest request, String regionCode, Long requesterId) {
@@ -30,6 +34,7 @@ public class CreatePostCommand {
             .requesterId(requesterId)
             .title(request.getTitle())
             .content(request.getContent())
+            .imageIds(request.getImageIds())
             .build();
     }
 

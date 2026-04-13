@@ -65,7 +65,7 @@ class PostControllerTest {
         ReflectionTestUtils.setField(post, "id", 100L);
         ReflectionTestUtils.setField(post, "createdAt", LocalDateTime.now());
         ReflectionTestUtils.setField(post, "updatedAt", LocalDateTime.now());
-        detail = PostDetailResponse.from(post);
+        detail = PostDetailResponse.from(post, List.of());
 
         given(jwtProvider.isValid(TOKEN)).willReturn(true);
         given(jwtProvider.getUserId(TOKEN)).willReturn(1L);

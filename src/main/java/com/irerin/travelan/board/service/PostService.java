@@ -1,6 +1,7 @@
 package com.irerin.travelan.board.service;
 
 import java.time.Clock;
+import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -9,14 +10,17 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.irerin.travelan.board.dto.CreatePostCommand;
 import com.irerin.travelan.board.dto.PostDetailResponse;
+import com.irerin.travelan.board.dto.PostImageResponse;
 import com.irerin.travelan.board.dto.PostSummaryResponse;
 import com.irerin.travelan.board.dto.UpdatePostCommand;
 import com.irerin.travelan.board.entity.Post;
 import com.irerin.travelan.board.entity.PostHistory;
 import com.irerin.travelan.board.entity.PostHistoryAction;
+import com.irerin.travelan.board.entity.PostImage;
 import com.irerin.travelan.board.entity.PostStatus;
 import com.irerin.travelan.board.entity.Region;
 import com.irerin.travelan.board.repository.PostHistoryRepository;
+import com.irerin.travelan.board.repository.PostImageRepository;
 import com.irerin.travelan.board.repository.PostRepository;
 import com.irerin.travelan.board.repository.RegionRepository;
 import com.irerin.travelan.board.support.HtmlSanitizer;
@@ -35,6 +39,7 @@ public class PostService {
 
     private final PostRepository postRepository;
     private final PostHistoryRepository postHistoryRepository;
+    private final PostImageRepository postImageRepository;
     private final RegionRepository regionRepository;
     private final UserRepository userRepository;
     private final Clock clock;
@@ -47,9 +52,10 @@ public class PostService {
         User author = userRepository.findById(command.getRequesterId())
             .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다"));
 
-        Post post = command.toEntity(region, author);
+        Post post = postRepository.save(command.toEntity(region, author));
+        List<PostImage> images = attachImages(post, command.getImageIds());
 
-        return PostDetailResponse.from(postRepository.save(post));
+        return PostDetailResponse.from(post, images.stream().map(PostImageResponse::from).toList());
     }
 
     public Page<PostSummaryResponse> listByRegion(String regionCode, Pageable pageable) {
@@ -64,7 +70,9 @@ public class PostService {
         Post post = postRepository.findByIdAndStatus(postId, PostStatus.PUBLISHED)
             .orElseThrow(() -> new NotFoundException("게시글을 찾을 수 없습니다"));
         post.increaseViewCount();
-        return PostDetailResponse.from(post);
+        List<PostImageResponse> images = postImageRepository.findByPostIdOrderByDisplayOrderAsc(postId)
+            .stream().map(PostImageResponse::from).toList();
+        return PostDetailResponse.from(post, images);
     }
 
     @Transactional
@@ -79,7 +87,10 @@ public class PostService {
         postHistoryRepository.save(PostHistory.snapshot(post, PostHistoryAction.UPDATED, command.getRequesterId()));
         post.update(command.getTitle(), HtmlSanitizer.sanitize(command.getContent()));
 
-        return PostDetailResponse.from(post);
+        detachImages(post.getId());
+        List<PostImage> images = attachImages(post, command.getImageIds());
+
+        return PostDetailResponse.from(post, images.stream().map(PostImageResponse::from).toList());
     }
 
     @Transactional
@@ -97,6 +108,24 @@ public class PostService {
 
         postHistoryRepository.save(PostHistory.snapshot(post, PostHistoryAction.DELETED, requesterId));
         post.delete(clock);
+    }
+
+    private List<PostImage> attachImages(Post post, List<Long> imageIds) {
+        if (imageIds == null || imageIds.isEmpty()) {
+            return List.of();
+        }
+
+        List<PostImage> images = postImageRepository.findAllByIdInAndPostIsNull(imageIds);
+        for (int i = 0; i < images.size(); i++) {
+            images.get(i).attachTo(post, i);
+        }
+        
+        return images;
+    }
+
+    private void detachImages(Long postId) {
+        List<PostImage> existing = postImageRepository.findByPostId(postId);
+        existing.forEach(PostImage::detach);
     }
 
 }

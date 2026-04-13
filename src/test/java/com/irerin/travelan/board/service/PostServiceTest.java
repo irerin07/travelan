@@ -11,6 +11,8 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -32,6 +34,7 @@ import com.irerin.travelan.board.entity.PostHistoryAction;
 import com.irerin.travelan.board.entity.PostStatus;
 import com.irerin.travelan.board.entity.Region;
 import com.irerin.travelan.board.repository.PostHistoryRepository;
+import com.irerin.travelan.board.repository.PostImageRepository;
 import com.irerin.travelan.board.repository.PostRepository;
 import com.irerin.travelan.board.repository.RegionRepository;
 import com.irerin.travelan.common.exception.ForbiddenException;
@@ -45,6 +48,7 @@ class PostServiceTest {
 
     @Mock PostRepository postRepository;
     @Mock PostHistoryRepository postHistoryRepository;
+    @Mock PostImageRepository postImageRepository;
     @Mock RegionRepository regionRepository;
     @Mock UserRepository userRepository;
     private final Clock clock = Clock.fixed(Instant.parse("2026-04-09T12:00:00Z"), ZoneId.of("UTC"));
@@ -56,7 +60,7 @@ class PostServiceTest {
 
     @BeforeEach
     void setUp() {
-        postService = new PostService(postRepository, postHistoryRepository, regionRepository, userRepository, clock);
+        postService = new PostService(postRepository, postHistoryRepository, postImageRepository, regionRepository, userRepository, clock);
         region = Region.of("seoul", "서울", "desc", 1, true);
         ReflectionTestUtils.setField(region, "id", 10L);
         author = User.of("a@x.com", "p", "홍길동", "01000000000", "여행자");
@@ -146,6 +150,7 @@ class PostServiceTest {
         Post post = Post.of(region, author, "t", "c");
         ReflectionTestUtils.setField(post, "id", 5L);
         given(postRepository.findByIdAndStatus(5L, PostStatus.PUBLISHED)).willReturn(Optional.of(post));
+        given(postImageRepository.findByPostIdOrderByDisplayOrderAsc(5L)).willReturn(Collections.emptyList());
 
         postService.get(5L);
 
