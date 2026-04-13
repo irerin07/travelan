@@ -39,12 +39,7 @@ public class CreatePostCommand {
     }
 
     public Post toEntity(Region region, User author) {
-        return Post.builder()
-                .region(region)
-                .author(author)
-                .title(title)
-                .content(HtmlSanitizer.sanitize(content))
-                .build();
+        return Post.of(region, author, title, HtmlSanitizer.sanitize(content));
     }
 
 }
