@@ -62,6 +62,16 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void handleDataIntegrityViolation_게시글신고_제약조건_구체적_메시지_반환() {
+        var cause = new RuntimeException("Duplicate entry for key 'uq_post_reports_post_reporter'");
+        var ex = new DataIntegrityViolationException("could not execute statement", cause);
+
+        ResponseEntity<ApiResponse<?>> response = handler.handleDataIntegrityViolation(ex);
+
+        assertThat(response.getBody().getError().getMessage()).isEqualTo("이미 신고한 게시글입니다");
+    }
+
+    @Test
     void handleDataIntegrityViolation_알수없는_제약조건_제네릭_메시지_반환() {
         var cause = new RuntimeException("Duplicate entry 'xxx' for key 'other_table.some_column'");
         var ex = new DataIntegrityViolationException("could not execute statement", cause);

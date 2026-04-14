@@ -32,9 +32,6 @@ public class PostReportService {
         Post post = postRepository.findByIdAndStatus(command.getPostId(), PostStatus.PUBLISHED)
             .orElseThrow(() -> new NotFoundException("게시글을 찾을 수 없습니다"));
 
-        User reporter = userRepository.findById(command.getReporterId())
-            .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다"));
-
         if (post.isAuthor(command.getReporterId())) {
             throw new ForbiddenException("자신의 게시글은 신고할 수 없습니다");
         }
@@ -42,6 +39,9 @@ public class PostReportService {
         if (postReportRepository.existsByPostIdAndReporterId(command.getPostId(), command.getReporterId())) {
             throw new DuplicateException("이미 신고한 게시글입니다");
         }
+
+        User reporter = userRepository.findById(command.getReporterId())
+            .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다"));
 
         PostReport saved = postReportRepository.save(command.toEntity(post, reporter));
         return ReportResponse.from(saved);

@@ -23,14 +23,6 @@ public class ReportPostCommand {
         this.reason = reason;
     }
 
-    public static ReportPostCommand of(Long postId, Long reporterId, ReportReason reason) {
-        return ReportPostCommand.builder()
-            .postId(postId)
-            .reporterId(reporterId)
-            .reason(reason)
-            .build();
-    }
-
     public static ReportPostCommand from(CreateReportRequest request, Long postId, Long reporterId) {
         return ReportPostCommand.builder()
             .postId(postId)
