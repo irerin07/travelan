@@ -5,18 +5,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
+import org.springframework.context.annotation.Import;
 
 import com.irerin.travelan.board.entity.Post;
 import com.irerin.travelan.board.entity.PostReport;
 import com.irerin.travelan.board.entity.Region;
 import com.irerin.travelan.board.entity.ReportReason;
+import com.irerin.travelan.common.config.JpaConfig;
 import com.irerin.travelan.user.entity.User;
 import com.irerin.travelan.user.repository.UserRepository;
 
-@SpringBootTest
-@Transactional
+@DataJpaTest
+@Import(JpaConfig.class)
 class PostReportRepositoryTest {
 
     @Autowired PostReportRepository postReportRepository;
