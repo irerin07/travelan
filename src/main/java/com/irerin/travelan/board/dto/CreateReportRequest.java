@@ -21,9 +21,4 @@ public class CreateReportRequest {
         this.reason = reason;
     }
 
-    public static CreateReportRequest of(ReportReason reason) {
-        return CreateReportRequest.builder()
-            .reason(reason)
-            .build();
-    }
 }

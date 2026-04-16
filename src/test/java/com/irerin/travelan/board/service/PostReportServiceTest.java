@@ -16,7 +16,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.irerin.travelan.board.dto.CreateReportRequest;
 import com.irerin.travelan.board.dto.ReportPostCommand;
 import com.irerin.travelan.board.dto.ReportResponse;
 import com.irerin.travelan.board.entity.Post;
@@ -65,8 +64,7 @@ class PostReportServiceTest {
     }
 
     private ReportPostCommand createCommand(Long postId, Long reporterId, ReportReason reason) {
-        CreateReportRequest request = CreateReportRequest.of(reason);
-        return ReportPostCommand.from(request, postId, reporterId);
+        return ReportPostCommand.of(postId, reporterId, reason);
     }
 
     @Test
@@ -110,9 +108,8 @@ class PostReportServiceTest {
     @Test
     void report_throwsForbiddenException_whenReportingOwnPost() {
         given(postRepository.findByIdAndStatus(100L, PostStatus.PUBLISHED)).willReturn(Optional.of(post));
-        given(userRepository.findById(1L)).willReturn(Optional.of(author));
 
-        // author (id=1) tries to report own post (also authorId=1)
+        // author (id=1) tries to report own post — self-report check happens before reporter lookup
         ReportPostCommand command = createCommand(100L, 1L, ReportReason.SPAM);
         assertThatThrownBy(() -> postReportService.report(command))
             .isInstanceOf(ForbiddenException.class)

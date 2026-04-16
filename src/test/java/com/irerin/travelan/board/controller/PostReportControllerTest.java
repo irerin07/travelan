@@ -38,7 +38,6 @@ import com.irerin.travelan.user.repository.UserRepository;
 
 @WebMvcTest(controllers = PostReportController.class)
 @Import({SecurityConfig.class, AuthCookieFactory.class})
-@org.springframework.boot.test.autoconfigure.json.AutoConfigureJson
 class PostReportControllerTest {
 
     @Autowired MockMvc mockMvc;
