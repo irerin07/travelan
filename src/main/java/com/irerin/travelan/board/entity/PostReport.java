@@ -27,13 +27,15 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "post_reports", uniqueConstraints = @UniqueConstraint(
-    name = "uq_post_reports_post_reporter",
+    name = PostReport.UQ_POST_REPORTER,
     columnNames = {"post_id", "reporter_id"}
 ))
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PostReport {
+
+    public static final String UQ_POST_REPORTER = "uq_post_reports_post_reporter";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -5,3 +5,4 @@
 - [TravelanApplicationTests contextLoads 실패](project_failing_integration_test.md) — @SpringBootTest 전체 컨텍스트 로드 테스트는 MySQL 연결 없이 항상 실패
 - [AuthCookieFactory WebMvcTest 주의사항](project_authcookiefactory.md) — auth.support.AuthCookieFactory는 @WebMvcTest에서 @Import 필요
 - [WebMvcTest + SecurityConfig 주의사항](project_webmvctest_securityconfig.md) — SecurityConfig @Import 시 JwtProvider + UserRepository 모두 @MockitoBean 필요, 인증 테스트엔 userRepository stub 필수
+- [TOCTOU 중복 체크는 DB 제약에 위임](feedback_toctou_duplicate.md) — existsBy+save 패턴 제거, DB UNIQUE 제약 + DataIntegrityViolationException 핸들러에만 의존

@@ -7,6 +7,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import com.irerin.travelan.board.entity.PostReport;
 import com.irerin.travelan.common.response.ApiResponse;
 
 class GlobalExceptionHandlerTest {
@@ -63,7 +64,7 @@ class GlobalExceptionHandlerTest {
 
     @Test
     void handleDataIntegrityViolation_게시글신고_제약조건_구체적_메시지_반환() {
-        var cause = new RuntimeException("Duplicate entry for key 'uq_post_reports_post_reporter'");
+        var cause = new RuntimeException("Duplicate entry for key '" + PostReport.UQ_POST_REPORTER + "'");
         var ex = new DataIntegrityViolationException("could not execute statement", cause);
 
         ResponseEntity<ApiResponse<?>> response = handler.handleDataIntegrityViolation(ex);

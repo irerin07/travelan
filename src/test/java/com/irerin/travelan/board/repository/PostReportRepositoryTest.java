@@ -1,12 +1,14 @@
 package com.irerin.travelan.board.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import com.irerin.travelan.board.entity.Post;
 import com.irerin.travelan.board.entity.PostReport;
@@ -46,5 +48,14 @@ class PostReportRepositoryTest {
     @Test
     void existsByPostIdAndReporterId_신고없으면_false_반환() {
         assertThat(postReportRepository.existsByPostIdAndReporterId(post.getId(), reporter.getId())).isFalse();
+    }
+
+    @Test
+    void save_동일한_게시글_동일한_신고자_저장시_DataIntegrityViolationException_발생() {
+        postReportRepository.saveAndFlush(PostReport.of(post, reporter, ReportReason.SPAM));
+
+        assertThatThrownBy(() ->
+            postReportRepository.saveAndFlush(PostReport.of(post, reporter, ReportReason.OBSCENE))
+        ).isInstanceOf(DataIntegrityViolationException.class);
     }
 }

@@ -26,7 +26,6 @@ import com.irerin.travelan.board.entity.Region;
 import com.irerin.travelan.board.entity.ReportReason;
 import com.irerin.travelan.board.repository.PostReportRepository;
 import com.irerin.travelan.board.repository.PostRepository;
-import com.irerin.travelan.common.exception.DuplicateException;
 import com.irerin.travelan.common.exception.ForbiddenException;
 import com.irerin.travelan.common.exception.NotFoundException;
 import com.irerin.travelan.user.entity.User;
@@ -66,8 +65,7 @@ class PostReportServiceTest {
     }
 
     private ReportPostCommand createCommand(Long postId, Long reporterId, ReportReason reason) {
-        CreateReportRequest request = new CreateReportRequest();
-        request.setReason(reason);
+        CreateReportRequest request = CreateReportRequest.of(reason);
         return ReportPostCommand.from(request, postId, reporterId);
     }
 
@@ -75,7 +73,6 @@ class PostReportServiceTest {
     void report_succeeds_whenValidRequest() {
         given(postRepository.findByIdAndStatus(100L, PostStatus.PUBLISHED)).willReturn(Optional.of(post));
         given(userRepository.findById(2L)).willReturn(Optional.of(reporter));
-        given(postReportRepository.existsByPostIdAndReporterId(100L, 2L)).willReturn(false);
         given(postReportRepository.save(any(PostReport.class))).willAnswer(inv -> {
             PostReport saved = inv.getArgument(0);
             ReflectionTestUtils.setField(saved, "id", 999L);
@@ -113,22 +110,12 @@ class PostReportServiceTest {
     @Test
     void report_throwsForbiddenException_whenReportingOwnPost() {
         given(postRepository.findByIdAndStatus(100L, PostStatus.PUBLISHED)).willReturn(Optional.of(post));
+        given(userRepository.findById(1L)).willReturn(Optional.of(author));
 
         // author (id=1) tries to report own post (also authorId=1)
         ReportPostCommand command = createCommand(100L, 1L, ReportReason.SPAM);
         assertThatThrownBy(() -> postReportService.report(command))
             .isInstanceOf(ForbiddenException.class)
             .hasMessageContaining("자신의 게시글");
-    }
-
-    @Test
-    void report_throwsDuplicateException_whenAlreadyReported() {
-        given(postRepository.findByIdAndStatus(100L, PostStatus.PUBLISHED)).willReturn(Optional.of(post));
-        given(postReportRepository.existsByPostIdAndReporterId(100L, 2L)).willReturn(true);
-
-        ReportPostCommand command = createCommand(100L, 2L, ReportReason.SPAM);
-        assertThatThrownBy(() -> postReportService.report(command))
-            .isInstanceOf(DuplicateException.class)
-            .hasMessageContaining("이미 신고");
     }
 }

@@ -25,6 +25,10 @@ import com.irerin.travelan.auth.jwt.JwtProvider;
 import com.irerin.travelan.auth.support.AuthCookieFactory;
 import com.irerin.travelan.board.dto.ReportPostCommand;
 import com.irerin.travelan.board.dto.ReportResponse;
+import com.irerin.travelan.board.entity.Post;
+import com.irerin.travelan.board.entity.PostReport;
+import com.irerin.travelan.board.entity.Region;
+import com.irerin.travelan.board.entity.ReportReason;
 import com.irerin.travelan.board.service.PostReportService;
 import com.irerin.travelan.common.config.SecurityConfig;
 import com.irerin.travelan.common.exception.DuplicateException;
@@ -65,7 +69,14 @@ class PostReportControllerTest {
 
     @Test
     void report_withValidToken_returns201() throws Exception {
-        ReportResponse response = ReportResponse.of(999L, LocalDateTime.now());
+        Region region = Region.of("seoul", "서울", "desc", 1, true);
+        User author = User.of("a@x.com", "p", "작성자", "01000000000", "작성자닉");
+        User reporterUser = User.of("b@x.com", "p", "신고자", "01011111111", "신고자닉");
+        Post post = Post.of(region, author, "제목", "내용");
+        PostReport postReport = PostReport.of(post, reporterUser, ReportReason.SPAM);
+        ReflectionTestUtils.setField(postReport, "id", 999L);
+        ReflectionTestUtils.setField(postReport, "createdAt", LocalDateTime.now());
+        ReportResponse response = ReportResponse.from(postReport);
         given(postReportService.report(any(ReportPostCommand.class))).willReturn(response);
 
         mockMvc.perform(post("/api/v1/posts/100/reports")

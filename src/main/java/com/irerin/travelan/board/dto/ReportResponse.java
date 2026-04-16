@@ -27,10 +27,4 @@ public class ReportResponse {
             .build();
     }
 
-    public static ReportResponse of(Long reportId, LocalDateTime createdAt) {
-        return ReportResponse.builder()
-            .reportId(reportId)
-            .createdAt(createdAt)
-            .build();
-    }
 }
