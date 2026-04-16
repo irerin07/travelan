@@ -31,7 +31,6 @@ import com.irerin.travelan.board.entity.Region;
 import com.irerin.travelan.board.entity.ReportReason;
 import com.irerin.travelan.board.service.PostReportService;
 import com.irerin.travelan.common.config.SecurityConfig;
-import com.irerin.travelan.common.exception.DuplicateException;
 import com.irerin.travelan.common.exception.ForbiddenException;
 import com.irerin.travelan.user.entity.User;
 import com.irerin.travelan.user.entity.UserRole;
@@ -103,7 +102,9 @@ class PostReportControllerTest {
 
     @Test
     void report_duplicate_returns409() throws Exception {
-        willThrow(new DuplicateException("이미 신고한 게시글입니다"))
+        willThrow(new org.springframework.dao.DataIntegrityViolationException(
+                "could not execute statement",
+                new RuntimeException("Duplicate entry for key 'uq_post_reports_post_reporter'")))
             .given(postReportService).report(any(ReportPostCommand.class));
 
         mockMvc.perform(post("/api/v1/posts/100/reports")

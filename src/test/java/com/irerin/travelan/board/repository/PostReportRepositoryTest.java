@@ -1,6 +1,5 @@
 package com.irerin.travelan.board.repository;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -36,18 +35,6 @@ class PostReportRepositoryTest {
         User author = userRepository.save(User.of("author@test.com", "pass", "작성자", "01000000000", "작성자닉"));
         reporter = userRepository.save(User.of("reporter@test.com", "pass", "신고자", "01011111111", "신고자닉"));
         post = postRepository.save(Post.of(region, author, "제목", "내용"));
-    }
-
-    @Test
-    void existsByPostIdAndReporterId_신고존재시_true_반환() {
-        postReportRepository.save(PostReport.of(post, reporter, ReportReason.SPAM));
-
-        assertThat(postReportRepository.existsByPostIdAndReporterId(post.getId(), reporter.getId())).isTrue();
-    }
-
-    @Test
-    void existsByPostIdAndReporterId_신고없으면_false_반환() {
-        assertThat(postReportRepository.existsByPostIdAndReporterId(post.getId(), reporter.getId())).isFalse();
     }
 
     @Test

@@ -5,6 +5,4 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.irerin.travelan.board.entity.PostReport;
 
 public interface PostReportRepository extends JpaRepository<PostReport, Long> {
-
-    boolean existsByPostIdAndReporterId(Long postId, Long reporterId);
 }

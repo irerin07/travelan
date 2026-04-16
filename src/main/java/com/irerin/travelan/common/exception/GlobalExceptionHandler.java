@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
-import com.irerin.travelan.board.entity.PostReport;
 import com.irerin.travelan.common.response.ApiResponse;
 import com.irerin.travelan.common.response.ErrorResponse;
 
@@ -118,7 +117,7 @@ public class GlobalExceptionHandler {
             if (lower.contains("nickname")) {
                 return "이미 사용 중인 닉네임입니다";
             }
-            if (lower.contains(PostReport.UQ_POST_REPORTER)) {
+            if (lower.contains("uq_post_reports_post_reporter")) {
                 return "이미 신고한 게시글입니다";
             }
         }
