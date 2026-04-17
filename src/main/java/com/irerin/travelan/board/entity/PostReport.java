@@ -65,6 +65,9 @@ public class PostReport {
     }
 
     public static PostReport of(Post post, User reporter, ReportReason reason) {
+        if (reporter == null) {
+            throw new IllegalArgumentException("reporter must not be null at creation time");
+        }
         return PostReport.builder()
             .post(post)
             .reporter(reporter)

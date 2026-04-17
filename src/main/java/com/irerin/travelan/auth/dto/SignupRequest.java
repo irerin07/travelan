@@ -16,6 +16,7 @@ public class SignupRequest {
 
     @NotBlank(message = "이메일은 필수입니다")
     @Email(message = "이메일 형식이 올바르지 않습니다")
+    @Pattern(regexp = "^[\\w.-]+@[\\w.-]+\\.[a-zA-Z]{2,}$", message = "이메일 형식이 올바르지 않습니다")
     private String email;
 
     @NotBlank(message = "비밀번호는 필수입니다")
@@ -27,6 +28,7 @@ public class SignupRequest {
     private String passwordConfirm;
 
     @NotBlank(message = "이름은 필수입니다")
+    @Pattern(regexp = "^[가-힣a-zA-Z]+$", message = "이름은 한글 또는 영문만 입력 가능합니다")
     private String name;
 
     @NotBlank(message = "휴대폰 번호는 필수입니다")

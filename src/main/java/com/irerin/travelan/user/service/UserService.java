@@ -84,6 +84,18 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
+    public User findById(Long userId) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new NotFoundException("존재하지 않는 회원입니다"));
+
+        if (user.getStatus() == UserStatus.WITHDRAWN) {
+            throw new NotFoundException("존재하지 않는 회원입니다");
+        }
+
+        return user;
+    }
+
+    @Transactional(readOnly = true)
     public boolean isEmailAvailable(String email) {
         return !userRepository.existsByEmail(email);
     }

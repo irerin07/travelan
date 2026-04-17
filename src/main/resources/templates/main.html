@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travelan</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .container { text-align: center; }
+        h1 { font-size: 48px; color: #333; margin-bottom: 12px; }
+        p { font-size: 18px; color: #666; margin-bottom: 40px; }
+        .buttons { display: flex; gap: 16px; justify-content: center; }
+        .btn { display: inline-block; padding: 14px 36px; border-radius: 6px; font-size: 16px; font-weight: 600; text-decoration: none; cursor: pointer; border: none; }
+        .btn-primary { background: #4a90d9; color: #fff; }
+        .btn-primary:hover { background: #357abd; }
+        .btn-outline { background: #fff; color: #4a90d9; border: 2px solid #4a90d9; }
+        .btn-outline:hover { background: #4a90d9; color: #fff; }
+        .btn-danger { background: #fff; color: #e74c3c; border: 2px solid #e74c3c; }
+        .btn-danger:hover { background: #e74c3c; color: #fff; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Travelan</h1>
+    <p>여행 커뮤니티</p>
+
+    <div id="guest-buttons" class="buttons">
+        <a href="/view/login" class="btn btn-primary">로그인</a>
+        <a href="/view/signup" class="btn btn-outline">회원가입</a>
+    </div>
+
+    <div id="user-buttons" class="buttons hidden">
+        <a href="/view/mypage" class="btn btn-primary">마이페이지</a>
+        <button class="btn btn-danger" onclick="handleLogout()">로그아웃</button>
+    </div>
+</div>
+
+<script>
+    const token = localStorage.getItem('accessToken');
+
+    if (token) {
+        document.getElementById('guest-buttons').classList.add('hidden');
+        document.getElementById('user-buttons').classList.remove('hidden');
+    }
+
+    async function handleLogout() {
+        try {
+            await fetch('/api/v1/auth/logout', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+        } catch (e) {
+            // 서버 오류와 무관하게 로컬 토큰 삭제
+        }
+        localStorage.removeItem('accessToken');
+        location.reload();
+    }
+</script>
+</body>
+</html>
