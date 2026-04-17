@@ -45,8 +45,8 @@ public class PostReport {
     @JoinColumn(name = "post_id", nullable = false)
     private Post post;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "reporter_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "reporter_id", nullable = true)
     private User reporter;
 
     @Enumerated(EnumType.STRING)

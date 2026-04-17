@@ -31,14 +31,6 @@ public class ReportPostCommand {
             .build();
     }
 
-    public static ReportPostCommand of(Long postId, Long reporterId, ReportReason reason) {
-        return ReportPostCommand.builder()
-            .postId(postId)
-            .reporterId(reporterId)
-            .reason(reason)
-            .build();
-    }
-
     public PostReport toEntity(Post post, User reporter) {
         return PostReport.of(post, reporter, reason);
     }

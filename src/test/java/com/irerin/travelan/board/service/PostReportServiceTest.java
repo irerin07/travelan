@@ -16,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.irerin.travelan.board.dto.CreateReportRequest;
 import com.irerin.travelan.board.dto.ReportPostCommand;
 import com.irerin.travelan.board.dto.ReportResponse;
 import com.irerin.travelan.board.entity.Post;
@@ -64,7 +65,7 @@ class PostReportServiceTest {
     }
 
     private ReportPostCommand createCommand(Long postId, Long reporterId, ReportReason reason) {
-        return ReportPostCommand.of(postId, reporterId, reason);
+        return ReportPostCommand.from(CreateReportRequest.from(reason), postId, reporterId);
     }
 
     @Test
