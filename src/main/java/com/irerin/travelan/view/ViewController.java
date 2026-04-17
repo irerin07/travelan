@@ -2,6 +2,7 @@ package com.irerin.travelan.view;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
@@ -26,5 +27,15 @@ public class ViewController {
     @GetMapping("/mypage")
     public String myPage() {
         return "mypage";
+    }
+
+    @GetMapping("/posts/new")
+    public String postCreatePage() {
+        return "post-create";
+    }
+
+    @GetMapping("/posts/{postId}")
+    public String postDetailPage(@PathVariable Long postId) {
+        return "post-detail";
     }
 }
