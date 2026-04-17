@@ -17,6 +17,7 @@ public class PostDetailResponse {
     private final String regionName;
     private final String title;
     private final String content;
+    private final Long authorId;
     private final String authorNickname;
     private final long viewCount;
     private final List<PostImageResponse> images;
@@ -25,13 +26,14 @@ public class PostDetailResponse {
 
     @Builder(access = AccessLevel.PRIVATE)
     private PostDetailResponse(Long id, String regionCode, String regionName, String title, String content,
-                               String authorNickname, long viewCount, List<PostImageResponse> images,
+                               Long authorId, String authorNickname, long viewCount, List<PostImageResponse> images,
                                LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.regionCode = regionCode;
         this.regionName = regionName;
         this.title = title;
         this.content = content;
+        this.authorId = authorId;
         this.authorNickname = authorNickname;
         this.viewCount = viewCount;
         this.images = images;
@@ -46,6 +48,7 @@ public class PostDetailResponse {
             .regionName(post.getRegion().getName())
             .title(post.getTitle())
             .content(post.getContent())
+            .authorId(post.getAuthor().getId())
             .authorNickname(post.getAuthor().getNickname())
             .viewCount(post.getViewCount())
             .images(images)

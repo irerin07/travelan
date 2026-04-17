@@ -4,7 +4,9 @@ import java.time.Clock;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,9 +60,16 @@ public class PostService {
         return PostDetailResponse.from(post, images.stream().map(PostImageResponse::from).toList());
     }
 
-    public Page<PostSummaryResponse> listByRegion(String regionCode, Pageable pageable) {
+    public Page<PostSummaryResponse> listAll(int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        return postRepository.findByStatus(PostStatus.PUBLISHED, pageable)
+            .map(PostSummaryResponse::from);
+    }
+
+    public Page<PostSummaryResponse> listByRegion(String regionCode, int page, int size) {
         Region region = regionRepository.findByCodeAndActiveTrue(regionCode)
             .orElseThrow(() -> new NotFoundException("지역을 찾을 수 없습니다"));
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         return postRepository.findByRegionIdAndStatus(region.getId(), PostStatus.PUBLISHED, pageable)
             .map(PostSummaryResponse::from);
     }

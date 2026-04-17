@@ -12,9 +12,17 @@
         h1 { font-size: 24px; color: #333; margin-bottom: 16px; word-break: break-word; }
         .meta { font-size: 14px; color: #888; margin-bottom: 24px; display: flex; gap: 16px; flex-wrap: wrap; }
         .content { font-size: 16px; line-height: 1.7; color: #444; white-space: pre-wrap; word-break: break-word; min-height: 120px; }
-        .back { display: inline-block; margin-top: 32px; font-size: 14px; color: #4a90d9; text-decoration: none; }
+        .footer { display: flex; justify-content: space-between; align-items: center; margin-top: 32px; }
+        .back { font-size: 14px; color: #4a90d9; text-decoration: none; }
         .back:hover { text-decoration: underline; }
+        .actions { display: flex; gap: 8px; }
+        .btn { display: inline-block; padding: 8px 20px; border-radius: 6px; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; border: none; }
+        .btn-outline { background: #fff; color: #4a90d9; border: 2px solid #4a90d9; }
+        .btn-outline:hover { background: #4a90d9; color: #fff; }
+        .btn-danger { background: #fff; color: #e74c3c; border: 2px solid #e74c3c; }
+        .btn-danger:hover { background: #e74c3c; color: #fff; }
         .error { color: #e74c3c; font-size: 16px; text-align: center; padding: 40px 0; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
@@ -29,13 +37,20 @@
             <span id="post-views"></span>
         </div>
         <div class="content" id="post-content"></div>
+        <div class="footer">
+            <a href="/view" class="back">&larr; 메인으로</a>
+            <div id="post-actions" class="actions hidden">
+                <a id="btn-edit" class="btn btn-outline">수정</a>
+                <button id="btn-delete" class="btn btn-danger">삭제</button>
+            </div>
+        </div>
     </div>
     <div id="error" class="error" style="display:none;"></div>
-    <a href="/view" class="back">← 메인으로</a>
 </div>
 
 <script>
     const postId = location.pathname.split('/').pop();
+    const token = localStorage.getItem('accessToken');
 
     async function loadPost() {
         try {
@@ -59,12 +74,52 @@
             document.getElementById('post-content').textContent = post.content;
             document.getElementById('post').style.display = 'block';
             document.title = post.title + ' - Travelan';
+
+            if (token) {
+                checkOwnership(post.authorId);
+            }
         } catch (err) {
             document.getElementById('loading').style.display = 'none';
             document.getElementById('error').textContent = '서버와 통신할 수 없습니다.';
             document.getElementById('error').style.display = 'block';
         }
     }
+
+    async function checkOwnership(authorId) {
+        try {
+            const res = await fetch('/api/v1/users/me', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (!res.ok) return;
+            const json = await res.json();
+            if (json.data.id === authorId) {
+                document.getElementById('btn-edit').href = '/view/posts/' + postId + '/edit';
+                document.getElementById('post-actions').classList.remove('hidden');
+            }
+        } catch (e) {
+            // 소유권 확인 실패 시 버튼 미노출
+        }
+    }
+
+    document.getElementById('btn-delete').addEventListener('click', async () => {
+        if (!confirm('정말 삭제하시겠습니까?')) return;
+
+        try {
+            const res = await fetch('/api/v1/posts/' + postId, {
+                method: 'DELETE',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (res.ok || res.status === 204) {
+                alert('게시글이 삭제되었습니다.');
+                location.href = '/view';
+            } else {
+                const json = await res.json();
+                alert(json.error?.message || '삭제에 실패했습니다.');
+            }
+        } catch (e) {
+            alert('서버와 통신할 수 없습니다.');
+        }
+    });
 
     loadPost();
 </script>

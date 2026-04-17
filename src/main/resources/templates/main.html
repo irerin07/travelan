@@ -6,8 +6,8 @@
     <title>Travelan</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .container { text-align: center; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; display: flex; justify-content: center; padding: 60px 16px; }
+        .container { text-align: center; width: 100%; max-width: 640px; }
         h1 { font-size: 48px; color: #333; margin-bottom: 12px; }
         p { font-size: 18px; color: #666; margin-bottom: 40px; }
         .buttons { display: flex; gap: 16px; justify-content: center; }
@@ -19,6 +19,15 @@
         .btn-danger { background: #fff; color: #e74c3c; border: 2px solid #e74c3c; }
         .btn-danger:hover { background: #e74c3c; color: #fff; }
         .hidden { display: none; }
+        .recent-posts { margin-top: 48px; text-align: left; }
+        .recent-posts h2 { font-size: 20px; color: #333; margin-bottom: 16px; text-align: center; }
+        .post-list { list-style: none; }
+        .post-item { background: #fff; border-radius: 6px; padding: 14px 18px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
+        .post-item a { text-decoration: none; color: #333; font-size: 15px; font-weight: 500; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .post-item a:hover { color: #4a90d9; }
+        .post-meta { font-size: 13px; color: #999; margin-left: 12px; white-space: nowrap; }
+        .no-posts { text-align: center; color: #999; font-size: 15px; padding: 24px 0; }
+        .region-badge { display: inline-block; background: #e8f0fe; color: #4a90d9; padding: 2px 8px; border-radius: 3px; font-size: 12px; font-weight: 600; vertical-align: middle; margin-right: 4px; }
     </style>
 </head>
 <body>
@@ -36,6 +45,12 @@
         <a href="/view/mypage" class="btn btn-primary">마이페이지</a>
         <button class="btn btn-danger" onclick="handleLogout()">로그아웃</button>
     </div>
+
+    <div class="recent-posts">
+        <h2>최근 게시글</h2>
+        <ul id="post-list" class="post-list"></ul>
+        <p id="no-posts" class="no-posts hidden">게시글이 없습니다.</p>
+    </div>
 </div>
 
 <script>
@@ -45,6 +60,40 @@
         document.getElementById('guest-buttons').classList.add('hidden');
         document.getElementById('user-buttons').classList.remove('hidden');
     }
+
+    async function loadRecentPosts() {
+        try {
+            const res = await fetch('/api/v1/posts?page=1&size=10');
+            const json = await res.json();
+            const list = document.getElementById('post-list');
+            const noPosts = document.getElementById('no-posts');
+
+            if (!json.data || json.data.length === 0) {
+                noPosts.classList.remove('hidden');
+                return;
+            }
+
+            json.data.forEach(post => {
+                const li = document.createElement('li');
+                li.className = 'post-item';
+                li.innerHTML =
+                    '<a href="/view/posts/' + post.id + '"><span class="region-badge">' + escapeHtml(post.regionName) + '</span> ' + escapeHtml(post.title) + '</a>' +
+                    '<span class="post-meta">' + post.authorNickname + ' · ' + new Date(post.createdAt).toLocaleDateString('ko-KR') + '</span>';
+                list.appendChild(li);
+            });
+        } catch (e) {
+            document.getElementById('no-posts').textContent = '게시글을 불러올 수 없습니다.';
+            document.getElementById('no-posts').classList.remove('hidden');
+        }
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    loadRecentPosts();
 
     async function handleLogout() {
         try {

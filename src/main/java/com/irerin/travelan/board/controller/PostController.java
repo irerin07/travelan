@@ -3,8 +3,6 @@ package com.irerin.travelan.board.controller;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -13,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -39,13 +38,27 @@ public class PostController {
     @GetMapping("/api/v1/regions/{regionCode}/posts")
     public ApiResponse<List<PostSummaryResponse>> list(
         @PathVariable @Size(max = 50, message = "지역 코드는 50자 이하여야 합니다") String regionCode,
-        @PageableDefault(size = 20) Pageable pageable
+        @RequestParam(defaultValue = "1") int page,
+        @RequestParam(defaultValue = "20") int size
     ) {
-        Page<PostSummaryResponse> page = postService.listByRegion(regionCode, pageable);
+        Page<PostSummaryResponse> pageResult = postService.listByRegion(regionCode, page, size);
 
         return ApiResponse.<List<PostSummaryResponse>>builder()
-            .data(page.getContent())
-            .page(PageMeta.from(page, page.getNumber() + 1))
+            .data(pageResult.getContent())
+            .page(PageMeta.from(pageResult, page))
+            .build();
+    }
+
+    @GetMapping("/api/v1/posts")
+    public ApiResponse<List<PostSummaryResponse>> listAll(
+        @RequestParam(defaultValue = "1") int page,
+        @RequestParam(defaultValue = "20") int size
+    ) {
+        Page<PostSummaryResponse> pageResult = postService.listAll(page, size);
+
+        return ApiResponse.<List<PostSummaryResponse>>builder()
+            .data(pageResult.getContent())
+            .page(PageMeta.from(pageResult, page))
             .build();
     }
 

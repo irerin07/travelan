@@ -13,15 +13,17 @@ public class PostSummaryResponse {
 
     private final Long id;
     private final String regionCode;
+    private final String regionName;
     private final String title;
     private final String authorNickname;
     private final long viewCount;
     private final LocalDateTime createdAt;
 
     @Builder(access = AccessLevel.PRIVATE)
-    private PostSummaryResponse(Long id, String regionCode, String title, String authorNickname, long viewCount, LocalDateTime createdAt) {
+    private PostSummaryResponse(Long id, String regionCode, String regionName, String title, String authorNickname, long viewCount, LocalDateTime createdAt) {
         this.id = id;
         this.regionCode = regionCode;
+        this.regionName = regionName;
         this.title = title;
         this.authorNickname = authorNickname;
         this.viewCount = viewCount;
@@ -32,6 +34,7 @@ public class PostSummaryResponse {
         return PostSummaryResponse.builder()
             .id(post.getId())
             .regionCode(post.getRegion().getCode())
+            .regionName(post.getRegion().getName())
             .title(post.getTitle())
             .authorNickname(post.getAuthor().getNickname())
             .viewCount(post.getViewCount())

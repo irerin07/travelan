@@ -15,6 +15,9 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Query("select p from Post p join fetch p.author join fetch p.region where p.region.id = :regionId and p.status = :status")
     Page<Post> findByRegionIdAndStatus(Long regionId, PostStatus status, Pageable pageable);
 
+    @Query("select p from Post p join fetch p.author join fetch p.region where p.status = :status")
+    Page<Post> findByStatus(PostStatus status, Pageable pageable);
+
     @Query("select p from Post p join fetch p.author join fetch p.region where p.id = :id and p.status = :status")
     Optional<Post> findByIdAndStatus(Long id, PostStatus status);
 }

@@ -38,4 +38,9 @@ public class ViewController {
     public String postDetailPage(@PathVariable Long postId) {
         return "post-detail";
     }
+
+    @GetMapping("/posts/{postId}/edit")
+    public String postEditPage(@PathVariable Long postId) {
+        return "post-edit";
+    }
 }

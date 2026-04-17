@@ -1,6 +1,7 @@
 package com.irerin.travelan.board.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -85,13 +86,32 @@ class PostControllerTest {
         ReflectionTestUtils.setField(post, "id", 100L);
         ReflectionTestUtils.setField(post, "createdAt", LocalDateTime.now());
         PostSummaryResponse summary = PostSummaryResponse.from(post);
-        given(postService.listByRegion(eqStr("seoul"), any()))
+        given(postService.listByRegion(eqStr("seoul"), eq(1), eq(20)))
             .willReturn(new PageImpl<>(List.of(summary), PageRequest.of(0, 20), 1));
 
         mockMvc.perform(get("/api/v1/regions/seoul/posts"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.success").value(true))
             .andExpect(jsonPath("$.data[0].id").value(100));
+    }
+
+    @Test
+    void listAll_anonymousAllowed() throws Exception {
+        Region region = Region.of("seoul", "서울", "desc", 1, true);
+        ReflectionTestUtils.setField(region, "id", 10L);
+        User author = User.of("a@x.com", "p", "홍길동", "01000000000", "여행자");
+        ReflectionTestUtils.setField(author, "id", 1L);
+        Post post = Post.of(region, author, "title", "c");
+        ReflectionTestUtils.setField(post, "id", 200L);
+        ReflectionTestUtils.setField(post, "createdAt", LocalDateTime.now());
+        PostSummaryResponse summary = PostSummaryResponse.from(post);
+        given(postService.listAll(eq(1), eq(20)))
+            .willReturn(new PageImpl<>(List.of(summary), PageRequest.of(0, 20), 1));
+
+        mockMvc.perform(get("/api/v1/posts"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.success").value(true))
+            .andExpect(jsonPath("$.data[0].id").value(200));
     }
 
     private static String eqStr(String s) { return org.mockito.ArgumentMatchers.eq(s); }
@@ -103,7 +123,8 @@ class PostControllerTest {
         mockMvc.perform(get("/api/v1/posts/100"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.id").value(100))
-            .andExpect(jsonPath("$.data.title").value("title"));
+            .andExpect(jsonPath("$.data.title").value("title"))
+            .andExpect(jsonPath("$.data.authorId").value(1));
     }
 
     @Test
