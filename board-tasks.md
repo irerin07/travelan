@@ -74,20 +74,29 @@
 ---
 
 ## Phase 4 — 신고
-- [ ] ReportReason enum
-- [ ] PostReport 엔티티
-- [ ] PostReportRepository — `existsByPostIdAndReporterId`
-- [ ] PostReportRepository 테스트
-- [ ] ReportPostCommand
-- [ ] PostReportService — 자기글 신고 금지, 중복 금지
-- [ ] PostReportService 테스트
-- [ ] CreateReportRequest / ReportResponse
-- [ ] PostReportController — `POST /api/v1/posts/{id}/reports`
-- [ ] PostReportControllerTest
+- [x] ReportReason enum
+- [x] PostReport 엔티티
+- [x] PostReportRepository — `existsByPostIdAndReporterId`
+- [x] PostReportRepository 테스트
+- [x] ReportPostCommand
+- [x] PostReportService — 자기글 신고 금지, 중복 금지
+- [x] PostReportService 테스트
+- [x] CreateReportRequest / ReportResponse
+- [x] PostReportController — `POST /api/v1/posts/{id}/reports`
+- [x] PostReportControllerTest
 
 ---
 
-## Phase 5 — 마무리
+## Phase 5 — 자동 블라인드
+- [ ] PostReport 누적 횟수 임계값 설정 (application.yaml)
+- [ ] 임계값 도달 시 Post 상태를 BLOCKED로 자동 변경
+- [ ] 블라인드 해제(복원) 로직 (관리자 전용)
+- [ ] 오남용 방지 대책 검토 (조직적 신고 대응)
+- [ ] 자동 블라인드 테스트 (임계값 도달, 복원, 엣지 케이스)
+
+---
+
+## Phase 6 — 마무리
 - [ ] N+1 점검 (Post 목록 fetch join)
 - [ ] 글로벌 예외 처리 정리 (NotFound / Forbidden / Validation)
 - [ ] 전체 테스트 통과 확인

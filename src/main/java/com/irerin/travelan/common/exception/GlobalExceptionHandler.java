@@ -117,6 +117,9 @@ public class GlobalExceptionHandler {
             if (lower.contains("nickname")) {
                 return "이미 사용 중인 닉네임입니다";
             }
+            if (lower.contains("uq_post_reports_post_reporter")) {
+                return "이미 신고한 게시글입니다";
+            }
         }
 
         return "데이터 무결성 제약 조건 위반입니다";
