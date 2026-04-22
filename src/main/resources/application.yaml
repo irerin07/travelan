@@ -7,10 +7,21 @@ spring:
     compose:
       file: docker-compose.yml
   datasource:
-    url: jdbc:mysql://localhost:3306/travelan?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
-    username: travelan
-    password: travelan
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    write:
+      url: jdbc:mysql://localhost:3306/travelan?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+      username: travelan
+      password: travelan
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      hikari:
+        pool-name: write-pool
+    read:
+      url: jdbc:mysql://localhost:3306/travelan?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+      username: travelan
+      password: travelan
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      hikari:
+        maximum-pool-size: 15
+        pool-name: read-pool
   jpa:
     hibernate:
       ddl-auto: none

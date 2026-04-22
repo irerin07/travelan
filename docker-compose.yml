@@ -21,9 +21,12 @@ services:
     ports:
       - "8080:8080"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/travelan
-      SPRING_DATASOURCE_USERNAME: travelan
-      SPRING_DATASOURCE_PASSWORD: travelan
+      SPRING_DATASOURCE_WRITE_URL: jdbc:mysql://mysql:3306/travelan
+      SPRING_DATASOURCE_WRITE_USERNAME: travelan
+      SPRING_DATASOURCE_WRITE_PASSWORD: travelan
+      SPRING_DATASOURCE_READ_URL: jdbc:mysql://mysql:3306/travelan
+      SPRING_DATASOURCE_READ_USERNAME: travelan
+      SPRING_DATASOURCE_READ_PASSWORD: travelan
     depends_on:
       mysql:
         condition: service_healthy
