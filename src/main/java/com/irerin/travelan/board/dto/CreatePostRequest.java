@@ -3,6 +3,7 @@ package com.irerin.travelan.board.dto;
 import java.util.List;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,5 +23,5 @@ public class CreatePostRequest {
     private String content;
 
     @Size(max = 10, message = "이미지는 최대 10장까지 첨부할 수 있습니다")
-    private List<Long> imageIds;
+    private List<@Positive(message = "이미지 ID는 양수여야 합니다") Long> imageIds;
 }

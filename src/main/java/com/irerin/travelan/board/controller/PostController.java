@@ -26,6 +26,8 @@ import com.irerin.travelan.common.response.ApiResponse;
 import com.irerin.travelan.common.response.PageMeta;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 
@@ -38,8 +40,8 @@ public class PostController {
     @GetMapping("/api/v1/regions/{regionCode}/posts")
     public ApiResponse<List<PostSummaryResponse>> list(
         @PathVariable @Size(max = 50, message = "지역 코드는 50자 이하여야 합니다") String regionCode,
-        @RequestParam(defaultValue = "1") int page,
-        @RequestParam(defaultValue = "20") int size
+        @RequestParam(defaultValue = "1") @Min(1) int page,
+        @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
     ) {
         Page<PostSummaryResponse> pageResult = postService.listByRegion(regionCode, page, size);
 
@@ -51,8 +53,8 @@ public class PostController {
 
     @GetMapping("/api/v1/posts")
     public ApiResponse<List<PostSummaryResponse>> listAll(
-        @RequestParam(defaultValue = "1") int page,
-        @RequestParam(defaultValue = "20") int size
+        @RequestParam(defaultValue = "1") @Min(1) int page,
+        @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
     ) {
         Page<PostSummaryResponse> pageResult = postService.listAll(page, size);
 

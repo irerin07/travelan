@@ -114,6 +114,18 @@ class PostControllerTest {
             .andExpect(jsonPath("$.data[0].id").value(200));
     }
 
+    @Test
+    void listAll_returns400_whenPageIsZero() throws Exception {
+        mockMvc.perform(get("/api/v1/posts").param("page", "0"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void listAll_returns400_whenSizeExceeds100() throws Exception {
+        mockMvc.perform(get("/api/v1/posts").param("size", "101"))
+            .andExpect(status().isBadRequest());
+    }
+
     private static String eqStr(String s) { return org.mockito.ArgumentMatchers.eq(s); }
 
     @Test

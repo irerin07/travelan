@@ -73,7 +73,7 @@ class PostServiceTest {
     void create_sanitizesContentAndSavesPost() {
         given(regionRepository.findByCodeAndActiveTrue("seoul")).willReturn(Optional.of(region));
         given(userRepository.findById(1L)).willReturn(Optional.of(author));
-        given(postRepository.save(any(Post.class))).willAnswer(inv -> inv.getArgument(0));
+        given(postRepository.saveAndFlush(any(Post.class))).willAnswer(inv -> inv.getArgument(0));
 
         PostDetailResponse result = postService.create(
             createPostCommand("seoul", 1L, "title", "<p>ok</p><script>bad</script>")
@@ -161,7 +161,7 @@ class PostServiceTest {
     void create_withImageIds_onlyAttachesImagesOwnedByRequester() {
         given(regionRepository.findByCodeAndActiveTrue("seoul")).willReturn(Optional.of(region));
         given(userRepository.findById(1L)).willReturn(Optional.of(author));
-        given(postRepository.save(any(Post.class))).willAnswer(inv -> {
+        given(postRepository.saveAndFlush(any(Post.class))).willAnswer(inv -> {
             Post p = inv.getArgument(0);
             ReflectionTestUtils.setField(p, "id", 10L);
             return p;

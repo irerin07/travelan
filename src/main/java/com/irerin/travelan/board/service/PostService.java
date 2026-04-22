@@ -54,7 +54,7 @@ public class PostService {
         User author = userRepository.findById(command.getRequesterId())
             .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다"));
 
-        Post post = postRepository.save(command.toEntity(region, author));
+        Post post = postRepository.saveAndFlush(command.toEntity(region, author));
         List<PostImage> images = attachImages(post, command.getImageIds(), command.getRequesterId());
 
         return PostDetailResponse.from(post, images.stream().map(PostImageResponse::from).toList());
