@@ -126,6 +126,47 @@ class PostControllerTest {
             .andExpect(status().isBadRequest());
     }
 
+    @Test
+    void list_returns400_whenRegionCodeContainsUppercase() throws Exception {
+        mockMvc.perform(get("/api/v1/regions/Seoul/posts"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void list_returns400_whenRegionCodeContainsHyphen() throws Exception {
+        mockMvc.perform(get("/api/v1/regions/seoul-1/posts"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void list_returns400_whenRegionCodeStartsWithDigit() throws Exception {
+        mockMvc.perform(get("/api/v1/regions/1seoul/posts"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void list_returns400_whenRegionCodeContainsSpecialChars() throws Exception {
+        mockMvc.perform(get("/api/v1/regions/seoul!/posts"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void list_acceptsRegionCodeWithUnderscoreAndDigits() throws Exception {
+        Region region = Region.of("overseas_etc", "기타", "desc", 1, true);
+        ReflectionTestUtils.setField(region, "id", 10L);
+        User author = User.of("a@x.com", "p", "홍길동", "01000000000", "여행자");
+        ReflectionTestUtils.setField(author, "id", 1L);
+        Post post = Post.of(region, author, "title", "c");
+        ReflectionTestUtils.setField(post, "id", 100L);
+        ReflectionTestUtils.setField(post, "createdAt", LocalDateTime.now());
+        PostSummaryResponse summary = PostSummaryResponse.from(post);
+        given(postService.listByRegion(eqStr("overseas_etc"), eq(1), eq(20)))
+            .willReturn(new PageImpl<>(List.of(summary), PageRequest.of(0, 20), 1));
+
+        mockMvc.perform(get("/api/v1/regions/overseas_etc/posts"))
+            .andExpect(status().isOk());
+    }
+
     private static String eqStr(String s) { return org.mockito.ArgumentMatchers.eq(s); }
 
     @Test

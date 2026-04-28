@@ -28,6 +28,7 @@ import com.irerin.travelan.common.response.PageMeta;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 
@@ -39,7 +40,8 @@ public class PostController {
 
     @GetMapping("/api/v1/regions/{regionCode}/posts")
     public ApiResponse<List<PostSummaryResponse>> list(
-        @PathVariable @Size(max = 50, message = "지역 코드는 50자 이하여야 합니다") String regionCode,
+        @PathVariable @Size(max = 50, message = "지역 코드는 50자 이하여야 합니다")
+        @Pattern(regexp = "^[a-z][a-z0-9_]*$", message = "지역 코드는 영문 소문자로 시작하고 소문자/숫자/언더스코어만 사용할 수 있습니다") String regionCode,
         @RequestParam(defaultValue = "1") @Min(1) int page,
         @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
     ) {
@@ -72,7 +74,8 @@ public class PostController {
     @PostMapping("/api/v1/regions/{regionCode}/posts")
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<PostDetailResponse> create(
-        @PathVariable @Size(max = 50, message = "지역 코드는 50자 이하여야 합니다") String regionCode,
+        @PathVariable @Size(max = 50, message = "지역 코드는 50자 이하여야 합니다")
+        @Pattern(regexp = "^[a-z][a-z0-9_]*$", message = "지역 코드는 영문 소문자로 시작하고 소문자/숫자/언더스코어만 사용할 수 있습니다") String regionCode,
         @Valid @RequestBody CreatePostRequest request,
         @AuthenticationPrincipal Long userId
     ) {
