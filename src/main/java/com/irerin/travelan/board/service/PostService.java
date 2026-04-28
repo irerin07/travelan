@@ -26,6 +26,7 @@ import com.irerin.travelan.board.repository.PostImageRepository;
 import com.irerin.travelan.board.repository.PostRepository;
 import com.irerin.travelan.board.repository.RegionRepository;
 import com.irerin.travelan.board.support.HtmlSanitizer;
+import com.irerin.travelan.common.exception.BadRequestException;
 import com.irerin.travelan.common.exception.ForbiddenException;
 import com.irerin.travelan.common.exception.NotFoundException;
 import com.irerin.travelan.user.entity.User;
@@ -125,6 +126,9 @@ public class PostService {
         }
 
         List<PostImage> images = postImageRepository.findAllByIdInAndPostIsNullAndUploaderId(imageIds, requesterId);
+        if (images.size() != imageIds.size()) {
+            throw new BadRequestException("일부 이미지를 첨부할 수 없습니다");
+        }
         for (int i = 0; i < images.size(); i++) {
             images.get(i).attachTo(post, i);
         }

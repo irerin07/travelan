@@ -65,6 +65,12 @@ public class GlobalExceptionHandler {
             .body(ApiResponse.error(ErrorResponse.of("INVALID_FILE", ex.getMessage())));
     }
 
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<ApiResponse<?>> handleBadRequest(BadRequestException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(ApiResponse.error(ErrorResponse.of("BAD_REQUEST", ex.getMessage())));
+    }
+
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<ApiResponse<?>> handleNotFound(NotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)

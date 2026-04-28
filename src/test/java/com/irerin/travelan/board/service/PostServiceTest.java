@@ -37,6 +37,8 @@ import com.irerin.travelan.board.repository.PostHistoryRepository;
 import com.irerin.travelan.board.repository.PostImageRepository;
 import com.irerin.travelan.board.repository.PostRepository;
 import com.irerin.travelan.board.repository.RegionRepository;
+import com.irerin.travelan.board.entity.PostImage;
+import com.irerin.travelan.common.exception.BadRequestException;
 import com.irerin.travelan.common.exception.ForbiddenException;
 import com.irerin.travelan.common.exception.NotFoundException;
 import com.irerin.travelan.user.entity.User;
@@ -158,7 +160,7 @@ class PostServiceTest {
     }
 
     @Test
-    void create_withImageIds_onlyAttachesImagesOwnedByRequester() {
+    void create_throwsBadRequest_whenImageIdsCountMismatchesOwnedImages() {
         given(regionRepository.findByCodeAndActiveTrue("seoul")).willReturn(Optional.of(region));
         given(userRepository.findById(1L)).willReturn(Optional.of(author));
         given(postRepository.saveAndFlush(any(Post.class))).willAnswer(inv -> {
@@ -173,9 +175,34 @@ class PostServiceTest {
         request.setTitle("title");
         request.setContent("content");
         request.setImageIds(List.of(99L));
+
+        assertThatThrownBy(() -> postService.create(CreatePostCommand.from(request, "seoul", 1L)))
+            .isInstanceOf(BadRequestException.class);
+    }
+
+    @Test
+    void create_attachesAllImages_whenAllOwnedByRequester() {
+        given(regionRepository.findByCodeAndActiveTrue("seoul")).willReturn(Optional.of(region));
+        given(userRepository.findById(1L)).willReturn(Optional.of(author));
+        given(postRepository.saveAndFlush(any(Post.class))).willAnswer(inv -> {
+            Post p = inv.getArgument(0);
+            ReflectionTestUtils.setField(p, "id", 10L);
+            return p;
+        });
+        PostImage img1 = PostImage.of("u1", "k1.jpg", 1L, 1L);
+        PostImage img2 = PostImage.of("u2", "k2.jpg", 2L, 1L);
+        ReflectionTestUtils.setField(img1, "id", 11L);
+        ReflectionTestUtils.setField(img2, "id", 12L);
+        given(postImageRepository.findAllByIdInAndPostIsNullAndUploaderId(List.of(11L, 12L), 1L))
+            .willReturn(List.of(img1, img2));
+
+        CreatePostRequest request = new CreatePostRequest();
+        request.setTitle("title");
+        request.setContent("content");
+        request.setImageIds(List.of(11L, 12L));
         PostDetailResponse result = postService.create(CreatePostCommand.from(request, "seoul", 1L));
 
-        assertThat(result.getImages()).isEmpty();
+        assertThat(result.getImages()).hasSize(2);
     }
 
     private CreatePostCommand createPostCommand(String regionCode, Long requesterId, String title, String content) {
