@@ -18,9 +18,9 @@ class CreatePostCommandTest {
         User author = User.of("a@x.com", "p", "홍길동", "01000000000", "여행자");
         ReflectionTestUtils.setField(author, "id", 1L);
 
-        CreatePostRequest request = new CreatePostRequest();
-        request.setTitle("제목");
-        request.setContent("<p>본문</p><script>alert('x')</script>");
+        CreatePostRequest request = CreatePostRequest.of(
+            "제목", "<p>본문</p><script>alert('x')</script>", null
+        );
         CreatePostCommand command = CreatePostCommand.from(request, "seoul", 1L);
 
         Post post = command.toEntity(region, author);

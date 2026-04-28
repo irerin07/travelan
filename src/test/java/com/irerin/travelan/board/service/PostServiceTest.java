@@ -182,10 +182,7 @@ class PostServiceTest {
         given(postImageRepository.findAllByIdInAndPostIsNullAndUploaderId(List.of(99L), 1L))
             .willReturn(Collections.emptyList());
 
-        CreatePostRequest request = new CreatePostRequest();
-        request.setTitle("title");
-        request.setContent("content");
-        request.setImageIds(List.of(99L));
+        CreatePostRequest request = CreatePostRequest.of("title", "content", List.of(99L));
 
         assertThatThrownBy(() -> postService.create(CreatePostCommand.from(request, "seoul", 1L)))
             .isInstanceOf(BadRequestException.class);
@@ -207,26 +204,19 @@ class PostServiceTest {
         given(postImageRepository.findAllByIdInAndPostIsNullAndUploaderId(List.of(11L, 12L), 1L))
             .willReturn(List.of(img1, img2));
 
-        CreatePostRequest request = new CreatePostRequest();
-        request.setTitle("title");
-        request.setContent("content");
-        request.setImageIds(List.of(11L, 12L));
+        CreatePostRequest request = CreatePostRequest.of("title", "content", List.of(11L, 12L));
         PostDetailResponse result = postService.create(CreatePostCommand.from(request, "seoul", 1L));
 
         assertThat(result.getImages()).hasSize(2);
     }
 
     private CreatePostCommand createPostCommand(String regionCode, Long requesterId, String title, String content) {
-        CreatePostRequest request = new CreatePostRequest();
-        request.setTitle(title);
-        request.setContent(content);
+        CreatePostRequest request = CreatePostRequest.of(title, content, null);
         return CreatePostCommand.from(request, regionCode, requesterId);
     }
 
     private UpdatePostCommand updatePostCommand(Long postId, Long requesterId, String title, String content) {
-        UpdatePostRequest request = new UpdatePostRequest();
-        request.setTitle(title);
-        request.setContent(content);
+        UpdatePostRequest request = UpdatePostRequest.of(title, content, null);
         return UpdatePostCommand.from(request, postId, requesterId);
     }
 }
