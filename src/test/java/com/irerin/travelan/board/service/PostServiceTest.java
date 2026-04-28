@@ -148,15 +148,26 @@ class PostServiceTest {
     }
 
     @Test
-    void get_increasesViewCount() {
+    void get_incrementsViewCountAtomicallyAndReturnsFreshState() {
         Post post = Post.of(region, author, "t", "c");
         ReflectionTestUtils.setField(post, "id", 5L);
+        ReflectionTestUtils.setField(post, "viewCount", 1L);
+        given(postRepository.incrementViewCount(5L, PostStatus.PUBLISHED)).willReturn(1);
         given(postRepository.findByIdAndStatus(5L, PostStatus.PUBLISHED)).willReturn(Optional.of(post));
         given(postImageRepository.findByPostIdOrderByDisplayOrderAsc(5L)).willReturn(Collections.emptyList());
 
-        postService.get(5L);
+        PostDetailResponse result = postService.get(5L);
 
-        assertThat(post.getViewCount()).isEqualTo(1L);
+        assertThat(result.getViewCount()).isEqualTo(1L);
+        verify(postRepository).incrementViewCount(5L, PostStatus.PUBLISHED);
+    }
+
+    @Test
+    void get_throwsNotFound_whenIncrementMatchesZeroRows() {
+        given(postRepository.incrementViewCount(5L, PostStatus.PUBLISHED)).willReturn(0);
+
+        assertThatThrownBy(() -> postService.get(5L))
+            .isInstanceOf(NotFoundException.class);
     }
 
     @Test

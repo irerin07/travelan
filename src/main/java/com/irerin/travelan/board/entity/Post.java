@@ -101,10 +101,6 @@ public class Post {
         this.deletedAt = LocalDateTime.now(clock);
     }
 
-    public void increaseViewCount() {
-        this.viewCount++;
-    }
-
     public boolean isVisible() {
         return this.status == PostStatus.PUBLISHED;
     }

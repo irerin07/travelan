@@ -77,9 +77,12 @@ public class PostService {
 
     @Transactional
     public PostDetailResponse get(Long postId) {
+        int updated = postRepository.incrementViewCount(postId, PostStatus.PUBLISHED);
+        if (updated == 0) {
+            throw new NotFoundException("게시글을 찾을 수 없습니다");
+        }
         Post post = postRepository.findByIdAndStatus(postId, PostStatus.PUBLISHED)
             .orElseThrow(() -> new NotFoundException("게시글을 찾을 수 없습니다"));
-        post.increaseViewCount();
         List<PostImageResponse> images = postImageRepository.findByPostIdOrderByDisplayOrderAsc(postId)
             .stream().map(PostImageResponse::from).toList();
         return PostDetailResponse.from(post, images);

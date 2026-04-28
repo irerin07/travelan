@@ -102,3 +102,14 @@
 - [ ] 전체 테스트 통과 확인
 - [ ] CLAUDE.md 컨벤션 준수 셀프 체크 (Map 응답 / DTO 분리 / `new` 금지)
 - [ ] 코드 리뷰 / 리팩토링
+
+---
+
+## Phase 7 — viewCount 정책 후속 (#9 후속)
+
+`PostService.get()` 의 view count 증가는 `@Modifying UPDATE`로 RMW race를 제거했지만, 다음 정책 결정과 추가 작업이 남아있다.
+
+- [ ] **자기 게시글 view 제외 정책 결정** — 작성자가 자기 글을 열어도 viewCount가 증가하는 현재 동작이 맞는지 결정. 제외하기로 하면 `incrementViewCount`에 viewer 식별자 조건 추가 또는 service 레이어에서 분기
+- [ ] **세션/IP 기반 view 중복 제거(dedup)** — 동일 사용자가 새로고침 100번 시 100 증가하는 현 동작 보완. Redis TTL 캐시 또는 쿠키 기반으로 단위 시간 내 중복 카운트 차단 검토
+- [ ] **viewCount 무증가 조회용 메서드 분리** — 관리자 도구/내부 API 등에서 view 카운트를 올리지 않고 게시글을 열어야 하는 경우를 위해 `getWithoutIncrement(...)` 또는 플래그 방식 검토
+- [ ] **고트래픽 게시글 대비 비동기/배치 카운터** — 인기 게시글에서 매 조회 UPDATE가 master DB 부하로 누적되는 패턴이 보이면 Redis INCR + 배치 flush 또는 큐 기반 집계로 전환 검토 (지금은 과한 도입이라 미뤄둠)
