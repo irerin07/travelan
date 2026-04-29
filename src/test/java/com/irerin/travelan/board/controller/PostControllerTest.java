@@ -201,6 +201,41 @@ class PostControllerTest {
     }
 
     @Test
+    void create_returns400_whenTitleBlank() throws Exception {
+        mockMvc.perform(post("/api/v1/regions/seoul/posts")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + TOKEN)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"title\":\"\",\"content\":\"c\"}"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void create_returns400_whenContentExceeds10000Chars() throws Exception {
+        String content = "a".repeat(10001);
+        mockMvc.perform(post("/api/v1/regions/seoul/posts")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + TOKEN)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"title\":\"t\",\"content\":\"" + content + "\"}"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void create_returns400_whenImageIdsExceed10() throws Exception {
+        mockMvc.perform(post("/api/v1/regions/seoul/posts")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + TOKEN)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"title\":\"t\",\"content\":\"c\",\"imageIds\":[1,2,3,4,5,6,7,8,9,10,11]}"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void list_returns400_whenRegionCodeExceeds50Chars() throws Exception {
+        String tooLong = "a".repeat(51);
+        mockMvc.perform(get("/api/v1/regions/" + tooLong + "/posts"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void update_forbiddenWhenNotAuthor_403() throws Exception {
         willThrow(new ForbiddenException("게시글 수정 권한이 없습니다"))
             .given(postService).update(any(UpdatePostCommand.class));

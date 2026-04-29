@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import java.time.Clock;
@@ -106,6 +107,25 @@ class PostServiceTest {
         given(regionRepository.findByCodeAndActiveTrue("nope")).willReturn(Optional.empty());
         assertThatThrownBy(() -> postService.create(createPostCommand("nope", 1L, "t", "c")))
             .isInstanceOf(NotFoundException.class);
+    }
+
+    @Test
+    void create_throwsNotFound_whenRegionInactive() {
+        given(regionRepository.findByCodeAndActiveTrue("seoul")).willReturn(Optional.empty());
+        assertThatThrownBy(() -> postService.create(createPostCommand("seoul", 1L, "t", "c")))
+            .isInstanceOf(NotFoundException.class);
+    }
+
+    @Test
+    void create_skipsImageRepositoryWhenImageIdsIsEmpty() {
+        given(regionRepository.findByCodeAndActiveTrue("seoul")).willReturn(Optional.of(region));
+        given(userRepository.findById(1L)).willReturn(Optional.of(author));
+        given(postRepository.saveAndFlush(any(Post.class))).willAnswer(inv -> inv.getArgument(0));
+
+        CreatePostRequest request = CreatePostRequest.of("title", "content", List.of());
+        postService.create(CreatePostCommand.from(request, "seoul", 1L));
+
+        verify(postImageRepository, never()).findAllByIdInAndPostIsNullAndUploaderId(any(), any());
     }
 
     @Test
