@@ -87,6 +87,21 @@ class PostServiceTest {
     }
 
     @Test
+    void create_recordsCreatedHistorySnapshot() {
+        given(regionRepository.findByCodeAndActiveTrue("seoul")).willReturn(Optional.of(region));
+        given(userRepository.findById(1L)).willReturn(Optional.of(author));
+        given(postRepository.saveAndFlush(any(Post.class))).willAnswer(inv -> inv.getArgument(0));
+
+        postService.create(createPostCommand("seoul", 1L, "최초제목", "<p>최초본문</p>"));
+
+        verify(postHistoryRepository).save(argThat(h ->
+            h.getAction() == PostHistoryAction.CREATED
+                && h.getTitle().equals("최초제목")
+                && h.getContent().contains("<p>최초본문</p>")
+                && h.getEditorId().equals(1L)));
+    }
+
+    @Test
     void create_throwsWhenRegionNotFound() {
         given(regionRepository.findByCodeAndActiveTrue("nope")).willReturn(Optional.empty());
         assertThatThrownBy(() -> postService.create(createPostCommand("nope", 1L, "t", "c")))

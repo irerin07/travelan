@@ -113,3 +113,22 @@
 - [ ] **세션/IP 기반 view 중복 제거(dedup)** — 동일 사용자가 새로고침 100번 시 100 증가하는 현 동작 보완. Redis TTL 캐시 또는 쿠키 기반으로 단위 시간 내 중복 카운트 차단 검토
 - [ ] **viewCount 무증가 조회용 메서드 분리** — 관리자 도구/내부 API 등에서 view 카운트를 올리지 않고 게시글을 열어야 하는 경우를 위해 `getWithoutIncrement(...)` 또는 플래그 방식 검토
 - [ ] **고트래픽 게시글 대비 비동기/배치 카운터** — 인기 게시글에서 매 조회 UPDATE가 master DB 부하로 누적되는 패턴이 보이면 Redis INCR + 배치 flush 또는 큐 기반 집계로 전환 검토 (지금은 과한 도입이라 미뤄둠)
+
+---
+
+## Phase 8 — PostHistory 후속 (#12 후속)
+
+`PostService.create()`에서 CREATED 액션 스냅샷을 남기도록 변경했지만, 다음
+후속 작업이 남아있다.
+
+- [ ] **기존 게시글 backfill 마이그레이션** — 변경 이전에 작성된 posts에는
+  CREATED PostHistory가 없다. `INSERT INTO post_history(post_id, action,
+  title, content, editor_id, created_at) SELECT id, 'CREATED', title,
+  content, author_id, created_at FROM posts WHERE NOT EXISTS (SELECT 1
+  FROM post_history h WHERE h.post_id = posts.id AND h.action = 'CREATED')`
+  같은 형태로 일괄 보정. 운영 데이터 규모 작을 때 한 번만 실행
+- [ ] **블라인드 액션 도입** — Phase 5 자동 블라인드 추가 시 BLOCKED /
+  UNBLOCKED 액션을 PostHistoryAction에 추가하고 상태 전환 시 스냅샷 저장
+- [ ] **신고는 PostHistory가 아닌 PostReport로 분리 유지** — 진실의 원천
+  분리 정책 명시. PostHistory에 REPORTED 같은 액션 추가하지 않는다는 결정
+  문서화

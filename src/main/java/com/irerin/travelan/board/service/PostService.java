@@ -57,6 +57,7 @@ public class PostService {
 
         Post post = postRepository.saveAndFlush(command.toEntity(region, author));
         List<PostImage> images = attachImages(post, command.getImageIds(), command.getRequesterId());
+        postHistoryRepository.save(PostHistory.snapshot(post, PostHistoryAction.CREATED, command.getRequesterId()));
 
         return PostDetailResponse.from(post, images.stream().map(PostImageResponse::from).toList());
     }
